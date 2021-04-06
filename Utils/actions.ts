@@ -1,11 +1,11 @@
-import { Await } from './general.js';
+import { Await, MaybePromise } from './general.js';
 import MessageAction from "../MessageActions/MessageAction.js";
 import { ParseSupportedType, parseType, ParsedType } from "./parsing.js";
 
-export type Condition<T> = (this: MessageAction<T>, data: T) => boolean | Promise<boolean>;
-export type SimpleAction<T> = (this: MessageAction<T>, data: T) => any | Promise<any>;
-export type Middleware<T, R> = (this: MessageAction<T>, data: T) => R | Promise<R>;
-export type ActionErrorHandler<T> = (this: MessageAction<T>, data: T, error: any) => any | Promise<any>;
+export type Condition<T> = (this: MessageAction<T>, data: T) => MaybePromise<boolean>;
+export type SimpleAction<T> = (this: MessageAction<T>, data: T) => MaybePromise<any>;
+export type Middleware<T, R> = (this: MessageAction<T>, data: T) => MaybePromise<R>;
+export type ActionErrorHandler<T> = (this: MessageAction<T>, data: T, error: any) => MaybePromise<any>;
 
 export type CommandParserOptions = {
     parseFully?: boolean;
@@ -96,7 +96,8 @@ PrefixCommand = (prefix: string, { defaultErrorHandler = undefined, parseFully =
 		.condition(prefixChecker(prefix)),
 
 TypedPrefixCommand = <T extends ParseSupportedType[]>(prefix: string, { defaultErrorHandler = undefined, parseFully = true, ignoreEmpty = true }: PrefixCommandOptions = {}, ...types: T) =>
-	PrefixCommand(prefix, { defaultErrorHandler, parseFully, ignoreEmpty }).middleware(typeParser(...types)) as any as MessageAction<TypeParserOut<T>>;
+	PrefixCommand(prefix, { defaultErrorHandler, parseFully, ignoreEmpty })
+	.middleware(typeParser(...types));
 
-export type TypeParserOut<T extends ParseSupportedType> = { [K in keyof T]: Await<ParsedType<T[K]>>; };
+type TypeParserOut<T extends ParseSupportedType> = { [K in keyof T]: Await<ParsedType<T[K]>>; };
 export type PrefixCommandOptions = CommandParserOptions & { defaultErrorHandler?: ActionErrorHandler<string> };
