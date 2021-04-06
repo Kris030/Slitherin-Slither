@@ -54,3 +54,30 @@ export type Await<T> = T extends PromiseLike<infer U> ? Await<U> : T;
  * A shorthand for `T | Promise<T>`.
  */
 export type MaybePromise<T> = T | Promise<T>;
+
+/**
+ * Swaps by elements of two arrays by-coordinate.
+ * 
+ * @param array1 the first array.
+ * @param array2 the second array.
+ * @param index1 the index of the element from the first array.
+ * @param index2 the index of the element from the second array.
+ */
+export function swap(array1: any[], array2: any[], index1: number, index2: number) {
+	[array1[index1], array2[index2]] = [array2[index2], array1[index1]];
+}
+
+/**
+ * 
+ * Swaps by elements of two matricies by-coordinate.
+ * 
+ * @param array1 the first matrix.
+ * @param array2 the first matrix.
+ * @param x1 the x coordinate of the element from the first matrix.
+ * @param y1 the y coordinate of the element from the first matrix.
+ * @param x2 the x coordinate of the element from the second matrix.
+ * @param y2 the y coordinate of the element from the second matrix.
+ */
+export function swap2d(array1: any[][], array2: any[][], x1: number, y1: number, x2: number, y2: number) {
+	[array1[x1][y1], array2[x2][y2]] = [array2[x2][y2], array1[x1][y1]];
+}
