@@ -60,20 +60,69 @@ export const createActions = () => [
 		})
 		.onError((data, err) => console.error(err)),
 
-	PrefixCommand('ssoblivion')
+	PrefixCommand('sshop')
 	.action(async function() {
 		indexedDialog(this.msg.channel, this.msg.author, {
-			prompt: 'hey, how you doin?',
+			prompt: 'hey, watcha doin here?',
 			responses: [
 				{
-					answer: 'well, and you?',
+					answer: 'buyin\'',
 					branch: {
-						prompt: 'asdasdasd',
+						prompt: 'Great, we have rope, lampoil and bombs. You want it? It\'s yours my friend!',
+						responses: [
+							{
+								answer: 'rope',
+								branch: {
+									prompt: 'kys'
+								}
+							}, {
+								answer: 'lampoil',
+								branch: {
+									prompt: 'cover yourself in oil'
+								}
+							}, {
+								answer: 'bombs',
+								branch: {
+									prompt: 'allahu lol'
+								}
+							},
+						]
 					}
 				}, {
-					answer: 'sad, my dog died last day',
+					answer: 'sellin\'',
 					branch: {
-						prompt: 'dsadsadsa',
+						prompt: 'What do you have for me?',
+						responses: [
+							{
+								answer: 'children',
+								branch: {
+									prompt: 'good, we were almost out of livestock'
+								}
+							}, {
+								answer: 'penis',
+								branch: {
+									prompt: 'I\'ll take #2 please'
+								}
+							}, {
+								answer: 'funi',
+								branch: {
+									prompt: 'but is it true?',
+									responses:[
+										{
+											answer: 'yes',
+											branch: {
+												prompt: 'redpilled'
+											}
+										}, {
+											answer: 'no',
+											branch: {
+												prompt: 'bluepilled'
+											}
+										}
+									]
+								}
+							}, 
+						]
 					}
 				},
 			],
