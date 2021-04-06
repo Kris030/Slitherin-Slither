@@ -39,10 +39,12 @@ let statusInterval: NodeJS.Timeout;
 client.on('ready', () => {
 	console.log('Running daddy 🥵');
 
-	statusInterval = setTimeout(() => {
+	const setStatus = () => {
 		const { name, options } = getRandomElement(statuses);
 		client.user.setActivity(name, options);
-	}, config.statusInterval);
+	};
+	setStatus();
+	statusInterval = setTimeout(setStatus, config.statusInterval);
 });
 
 process.on('SIGINT', () => {
