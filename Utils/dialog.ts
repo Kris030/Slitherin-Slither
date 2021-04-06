@@ -94,8 +94,12 @@ export const indexedDialog = (channel: Channel, users: User | User[], dialog: Te
 							return false;
 						
 						index = parseInt(msg.content);
+						if (!Number.isSafeInteger(index))
+							return false;
 
-						return Number.isSafeInteger(index) && --index > 0 && index < dialog.responses.length;
+						index--;
+
+						return index >= 0 && index < dialog.responses.length;
 					}, {
 						max: 1,
 						time: timeout
