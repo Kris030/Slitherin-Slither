@@ -1,6 +1,6 @@
+import { Await } from './general.js';
 import MessageAction from "../MessageActions/MessageAction.js";
-import { Await } from "./general.js";
-import { ParseSupportedType, PrimitiveConstructor, parseType, ParsedType } from "./parsing.js";
+import { ParseSupportedType, parseType, ParsedType } from "./parsing.js";
 
 export type Condition<T> = (this: MessageAction<T>, data: T) => boolean | Promise<boolean>;
 export type SimpleAction<T> = (this: MessageAction<T>, data: T) => any | Promise<any>;

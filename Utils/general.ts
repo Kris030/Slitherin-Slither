@@ -49,3 +49,8 @@ export function arrayToString(array: any[], { separator=', ', begin='[', end=']'
  * Extracts the resolved type from a `Promise`.
  */
 export type Await<T> = T extends PromiseLike<infer U> ? Await<U> : T;
+
+/**
+ * A shorthand for `T | Promise<T>`.
+ */
+export type MaybePromise<T> = T | Promise<T>;
