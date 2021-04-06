@@ -12,42 +12,53 @@ export type DialogTree<P, A> = {
 export type TextDialogTree = DialogTree<string, string>;
 export type PredicateDialogTree = DialogTree<(channel: TextChannel) => any, (msg: Message) => MaybePromise<boolean>>;
 
-export const textDialog = (channel: Channel, users: User | User[], dialog: TextDialogTree, { timeout=60_000 } = {}) => {
+export const textDialog = (channel: Channel, users: User | User[], dialog: TextDialogTree, { timeout=60_000 } = {}): {
+    path: Promise<number[]>;
+    abort: () => void;
+} => {
 	if (!channel.isText())
 		throw 'Not a text channel';
 
 	if (!Array.isArray(users))
 		users = [users];
 
-	let abort: () => void;
-								/* could be buggy...? */
-	return { path: new Promise<number[]>(async (resolve, reject) => {
-		const path: number[] = [];
+	const ret: {
+		path: Promise<number[]>;
+		abort: () => void;
+	} = {
+		path: new Promise(async (resolve, _) => {
+			const path: number[] = [];
 
-		for (;;) {
-			await channel.send(dialog.prompt);
-			let index: number;
-			
-			const collector = channel.createMessageCollector(
-				(msg: Message) => {
-					if (!(users as User[]).includes(msg.author))
-						return false;
-					return (index = dialog.responses.findIndex(r => r.answer == msg.content)) != -1;
-				}, {
-					max: 1,
-					time: timeout
+			for (;;) {
+				await channel.send(dialog.prompt);
+				let index: number;
+				
+				const collector = channel.createMessageCollector(
+					(msg: Message) => {
+						if (!(users as User[]).includes(msg.author))
+							return false;
+						return (index = dialog.responses.findIndex(r => r.answer == msg.content)) != -1;
+					}, {
+						max: 1,
+						time: timeout
+					}
+				);
+
+				ret.abort = collector.stop;
+
+				await new Promise<void>((resolve, _) => collector.on('end', _ => resolve()));
+
+				path.push(index);
+
+				dialog = dialog.responses[index].branch;
+				if (index == -1 || dialog.responses == undefined) {
+					await channel.send(dialog.prompt);
+					return resolve(path);
 				}
-			);
+				
+			}
+		}), abort: undefined
+	};
 
-			abort = collector.stop;
-
-			await new Promise<void>((resolve, reject) => collector.on('end', _ => resolve()));
-
-			path.push(index);
-
-			dialog = dialog.responses[index]?.branch;
-			if (index == -1 || !dialog)
-				return resolve(path);
-		}
-	}), abort }
+	return ret;
 };
