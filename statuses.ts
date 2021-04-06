@@ -16,7 +16,7 @@ export default [
 			type: 'PLAYING'
 		}
 	}, {
-		name: 'to the cries',
+		name: 'the cries',
 		options: {
 			type: 'LISTENING'
 		}
