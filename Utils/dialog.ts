@@ -81,12 +81,14 @@ export const indexedDialog = (channel: Channel, users: User | User[], dialog: Te
 			const path: number[] = [];
 
 			for (;;) {
-				await channel.send(dialog.prompt);
+				let p = dialog.prompt + '\n';
 
 				let index = 0;
 				for (const a of dialog.responses)
-					await channel.send(++index + '. ' + a.answer);
+					p += ++index + '. ' + a.answer + '\n';
 
+				await channel.send(p);
+				
 				index = 0;
 				const collector = channel.createMessageCollector(
 					(msg: Message) => {
