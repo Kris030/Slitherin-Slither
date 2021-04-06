@@ -128,4 +128,51 @@ export const createActions = () => [
 			],
 		})
 	}),
+
+	TypedPrefixCommand('ssgame', {}, Number, Number)
+		.condition(async function([w, h]) {
+			if (w <= 0 || w > 10) {
+				await this.msg.channel.send('Width must be between 1 and 10');
+				return false;
+			}
+			if (h < 0 || h > 10) {
+				await this.msg.channel.send('Height must be between 1 and 10');
+				return false;
+			}
+			return true;
+		})
+		.action(async function([w, h]) {
+
+			type GameObject = {
+				character: string;
+			};
+
+			const map: GameObject[][] = new Array(w);
+			for (let x = 0; x < w; x++) {
+				map[x] = new Array<GameObject>(h);
+				for (let y = 0; y < map[x].length; y++)
+					map[x][y] = {
+						character: '🟦'
+					};
+			}
+			
+			const player: GameObject = {
+				character: '👺'
+			};
+
+			const renderMap = () => {
+				let s = '';
+				for (let x = 0; x < h; x++) {
+					for (let y = 0; y < w; y++)
+						s += map[y][x].character + ' ';
+					s += '\n';
+				}
+				return s;
+			};
+
+			const mapMessage = await this.msg.channel.send(renderMap()),
+					renderMessage = async () => mapMessage.edit(renderMap());
+
+
+		}),
 ] as any as MessageAction<Message>[];
