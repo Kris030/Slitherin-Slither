@@ -1,5 +1,5 @@
 import { Message, User } from 'discord.js';
-import { textDialog } from './Utils/dialog.js';
+import { indexedDialog, textDialog } from './Utils/dialog.js';
 import { emojifyString } from './Utils/emojis.js';
 import MessageAction from './MessageActions/MessageAction.js';
 import { PrefixCommand, TypedPrefixCommand } from './Utils/actions.js';
@@ -26,27 +26,57 @@ export const createActions = () => [
 		.condition(msg => msg.content.includes('daddy'))
 		.action(msg => msg.react('🥵')),
 
-	PrefixCommand('sstalk')
+	PrefixCommand('sstoned')
 		.action(async function() {
-			const path = await textDialog(this.msg.channel, this.msg.author, {
-				prompt: 'prompt #0',
+			textDialog(this.msg.channel, this.msg.author, {
+				prompt: 'you stoned?',
 				responses: [
 					{
-						answer: 'answer 1',
+						answer: 'yes',
 						branch: {
-							prompt: 'prompt #0 #0'
+							prompt: 'I\'m telling your momma',
 						}
 					}, {
-						answer: 'answer 2',
+						answer: 'no',
 						branch: {
-							prompt: 'prompt #0 #1'
+							prompt: 'lol want some? 🥦',
+							responses: [
+								{
+									answer: 'yes',
+									branch: {
+										prompt: 'sry we\'re out of stock'
+									}
+								}, {
+									answer: 'no',
+									branch: {
+										prompt: 'then why did you ask in the first place... you probably have homework to do'
+									}
+								}
+							]
 						}
 					},
 				]
 			}).path;
-			
-			await this.msg.channel.send('Path: ' + arrayToString(path));
 		})
 		.onError((data, err) => console.error(err)),
 
+	PrefixCommand('ssoblivion')
+	.action(async function() {
+		indexedDialog(this.msg.channel, this.msg.author, {
+			prompt: 'hey, how you doin?',
+			responses: [
+				{
+					answer: 'well, and you?',
+					branch: {
+						prompt: 'asdasdasd',
+					}
+				}, {
+					answer: 'sad, my dog died last day',
+					branch: {
+						prompt: 'dsadsadsa',
+					}
+				},
+			],
+		})
+	}),
 ] as any as MessageAction<Message>[];
