@@ -9,8 +9,16 @@ export const createActions = () => [
 	PrefixCommand('ssemojify', { parseFully: false })
 		.action(async function(data) {
 			await this.msg.channel.send(emojifyString(data[0]), {
-				split: true,
-				code: ' '
+				split: {
+					char: ' '
+				}
+			});
+		}),
+	
+	PrefixCommand('ssemojify2', { parseFully: false })
+		.action(async function(data) {
+			await this.msg.channel.send(emojifyString(data[0]), {
+				code: true
 			});
 		}),
 
