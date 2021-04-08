@@ -1,7 +1,7 @@
 import config from './config.js';
 import { Client } from 'discord.js';
 import statuses from './statuses.js';
-import { createActions } from './actions.js';
+import actions from './actions.js';
 import { getRandomElement } from './Utils/general.js';
 
 const client = new Client();
@@ -25,7 +25,7 @@ client.on('message', async msg => {
 		return;
 	
 	let runCount = 0;
-	for (const ma of createActions()) {
+	for (const ma of actions()) {
 		try {
 			if (await ma.run(msg))
 				runCount++;
