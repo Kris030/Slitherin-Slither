@@ -1,5 +1,6 @@
+import { Parser } from 'expr-eval';
 import { client } from '../index.js';
-import { Channel, Guild, Role, User } from 'discord.js';
+import { Channel, Guild, User } from 'discord.js';
 
 /**
  * Types that are supported by `parseType`.
@@ -31,17 +32,18 @@ T extends (typeof User) ? Promise<User> :
 T extends (typeof Channel) ? Promise<Channel> :
 T extends (typeof URL) ? URL : PrimitiveConstructor<T>;
 
+const mathParser = new Parser();
 /**
  * Parses a string as a given type.
  * 
  * @param string The string to parse.
  * @param type The type to parse as.
  */
-export function parseType <T extends ParseSupportedType>(string: string, type: T): ParsedType<T> {
+export function parseType<T extends ParseSupportedType>(string: string, type: T): ParsedType<T> {
 	let ret: any;
-	switch (type as any) {
+	switch (type as ParseSupportedType) {
 		case String: ret = string; break;
-		case Number: ret = Number(string); break;
+		case Number: ret = mathParser.evaluate(string); break;
 		case Boolean: ret = Boolean(string); break;
 		case Date: ret = new Date(string); break;
 		case User: ret = getUserFromMention(string); break;

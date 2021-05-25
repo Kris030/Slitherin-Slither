@@ -3,8 +3,20 @@
  * Returns a promise for waiting an amount of milliseconds.
  * @param ms The amount of time in milliseconds.
 */
-export function sleep(ms: number): Promise<void> {
-	return new Promise(res => setTimeout(res, ms));
+export function sleep(ms: number) {
+	return new Promise<void>(res => setTimeout(res, ms));
+}
+
+/**
+ * Returns a promise for waiting an amount of milliseconds.
+ * @param ms The amount of time in milliseconds.
+*/
+export function sleepCancellable(ms: number) {
+	let timeout: NodeJS.Timeout;
+	return { 
+		promise: new Promise<void>(res => timeout = setTimeout(res, ms)),
+		timeout
+	};
 }
 
 /**
@@ -53,7 +65,7 @@ export type Await<T> = T extends PromiseLike<infer U> ? Await<U> : T;
 /**
  * A shorthand for `T | Promise<T>`.
  */
-export type MaybePromise<T> = T | Promise<T>;
+export type MaybePromise<T = any> = T | Promise<T>;
 
 /**
  * Swaps by elements of two arrays by-coordinate.
@@ -80,4 +92,22 @@ export function swap(array1: any[], array2: any[], index1: number, index2: numbe
  */
 export function swap2d(array1: any[][], array2: any[][], x1: number, y1: number, x2: number, y2: number) {
 	[array1[x1][y1], array2[x2][y2]] = [array2[x2][y2], array1[x1][y1]];
+}
+
+/**
+ * Converts degrees to radians.
+ * @param degrees The angle in degrees.
+ * @returns The angle in radians.
+ */
+export function toRadians(degrees: number): number {
+	return Math.PI / 180 * degrees;
+}
+
+/**
+ * Converts degrees to degrees.
+ * @param radians The angle in radians.
+ * @returns The angle in degrees.
+ */
+export function toDegrees(radians: number) {
+	return 180 / Math.PI * radians;
 }
