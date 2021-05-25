@@ -6,6 +6,7 @@ package-lock.json
 # ts
 *.js
 *.js.map
+*.tsbuildinfo
 
 config.ts
 test
