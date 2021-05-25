@@ -1,11 +1,11 @@
 import { Await, MaybePromise } from './general.js';
-import MessageAction from "../MessageActions/MessageAction.js";
-import { ParseSupportedType, parseType, ParsedType } from "./parsing.js";
+import MessageAction from '../MessageActions/MessageAction.js';
+import { ParseSupportedType, parseType, ParsedType } from './parsing.js';
 
 export type Condition<T> = (this: MessageAction<T>, data: T) => MaybePromise<boolean>;
-export type SimpleAction<T> = (this: MessageAction<T>, data: T) => MaybePromise<any>;
+export type SimpleAction<T> = (this: MessageAction<T>, data: T) => MaybePromise;
 export type Middleware<T, R> = (this: MessageAction<T>, data: T) => MaybePromise<R>;
-export type ActionErrorHandler<T> = (this: MessageAction<T>, data: T, error: any) => MaybePromise<any>;
+export type ActionErrorHandler<T> = (this: MessageAction<T>, data: T, error: any) => MaybePromise;
 
 export type CommandParserOptions = {
     parseFully?: boolean;
@@ -97,7 +97,89 @@ PrefixCommand = (prefix: string, { defaultErrorHandler = undefined, parseFully =
 
 TypedPrefixCommand = <T extends ParseSupportedType[]>(prefix: string, { defaultErrorHandler = undefined, parseFully = true, ignoreEmpty = true }: PrefixCommandOptions = {}, ...types: T) =>
 	PrefixCommand(prefix, { defaultErrorHandler, parseFully, ignoreEmpty })
-	.middleware(typeParser(...types));
+	.middleware(typeParser(...types)),
 
-type TypeParserOut<T extends ParseSupportedType> = { [K in keyof T]: Await<ParsedType<T[K]>>; };
-export type PrefixCommandOptions = CommandParserOptions & { defaultErrorHandler?: ActionErrorHandler<string> };
+SubbedCommand = (prefix: string, commands: SubbedCommandType, { defaultErrorHandler = undefined as ActionErrorHandler<string>, ignoreEmpty = true } = {}) =>
+	PrefixCommand(prefix, { ignoreEmpty, defaultErrorHandler })
+		.action(async function(args) {
+
+			for (; commands ;) {
+				const s = args[0];
+				
+				if (!commands.hasOwnProperty(s))
+					return;
+				
+				args.splice(0, 1);
+				
+				const v = commands[s];
+
+				switch (typeof v) {
+
+					case 'function':
+						this.temp = v;
+						await this.temp(args);
+						return
+					
+					case 'object':
+						commands = v;
+						break;
+						
+				}
+
+			}
+			
+		}),
+TypedSubbedCommand = (prefix: string, commands: TypedSubbedCommandType, { defaultErrorHandler = undefined as ActionErrorHandler<string>, ignoreEmpty = true } = {}) =>
+	PrefixCommand(prefix, { ignoreEmpty, defaultErrorHandler })
+		.action(async function(args) {
+
+			for (; commands ;) {
+				const s = args[0];
+				
+				if (!commands.hasOwnProperty(s))
+					return;
+				
+				args.splice(0, 1);
+				
+				const v = commands[s];
+
+				if (v.handler && v.types) {
+					this.temp = v.handler;
+					
+					for (let i = 0; i < args.length; i++)
+						args[i] = parseType(args[i], v.types[i]);
+
+					return void await this.temp(args);
+				} else
+					//@ts-ignore
+					commands = v;
+
+			}
+			
+		});
+
+type TypeParserOut<T extends ParseSupportedType> = {
+	[K in keyof T]: Await<ParsedType<T[K]>>;
+};
+
+export type PrefixCommandOptions = CommandParserOptions & {
+	defaultErrorHandler?: ActionErrorHandler<string>;
+};
+
+export type SubbedCommandType = {
+	[sub: string]: SubbedCommandType | Middleware<string[], any>;
+};
+
+export type TypedSubbedSubCommandType<T extends ParseSupportedType[]> = {
+	types: T;
+	handler: Middleware<TypeParserOut<T>, any>;
+};
+
+export type TypedSubbedCommandType = {
+	[sub: string]: TypedSubbedCommandType | TypedSubbedSubCommandType<any>;
+};
+
+export const CreateTypedSubCommand =
+	<T extends ParseSupportedType[]>(handler: Middleware<TypeParserOut<T>, any>, ...types: T) => ({
+	types, handler
+});

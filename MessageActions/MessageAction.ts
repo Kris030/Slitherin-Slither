@@ -8,6 +8,7 @@ enum ActionType {
 }
 export default class MessageAction<T = Message> {
 
+	public temp: any;
 	private data: T;
 
 	private defaultErrorHandler: ActionErrorHandler<any>;
@@ -50,7 +51,7 @@ export default class MessageAction<T = Message> {
 		return this;
 	}
 
-	public onError(errorHandler: ActionErrorHandler<T>) {
+	public onError(errorHandler: ActionErrorHandler<T>, { overrideDefault=false } ={}) {
 		if (this.actions.length == 0)
 			throw 'No action yet';
 		
@@ -96,7 +97,7 @@ export default class MessageAction<T = Message> {
 				}
 
 			} catch (e) {
-				if (this.currentError && await this.currentError(this.data, e) === true)
+				if (await this.currentError?.(this.data, e) === true)
 					continue;
 
 				ret = false;
@@ -104,10 +105,9 @@ export default class MessageAction<T = Message> {
 			}
 		}
 
-		if (this.final)
-			await this.final(this.data);
+		await this.final?.(this.data);
 
-		this.currentAction = this.currentError = this.data = this.msg = null;
+		this.currentAction = this.currentError = this.data = this.msg = this.temp = null;
 		return ret;
 	}
 }
