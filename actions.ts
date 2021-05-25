@@ -10,5 +10,5 @@ export default () => [
 	...emojify,
 	...reactions,
 	...conversations,
-	game,
+	...game
 ] as any as MessageAction<Message>[];

@@ -4,7 +4,8 @@ import { emojifyString } from '../Utils/emojis.js';
 import { swap2d, MaybePromise } from '../Utils/general.js';
 
 const games = new Set<string>();
-export default TypedPrefixCommand('ssgame', {}, Number, Number)
+export default [
+	TypedPrefixCommand('ssgame', {}, Number, Number)
 		.condition(async function([w, h]) {
 			if (games.has(this.msg.author.id)) {
 				await this.msg.channel.send('fuck off can\'t start another game');
@@ -143,4 +144,5 @@ export default TypedPrefixCommand('ssgame', {}, Number, Number)
 				games.delete(user.id);
 			});
 
-		});
+		})
+];

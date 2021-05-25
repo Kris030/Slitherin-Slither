@@ -4,6 +4,7 @@
 		"module": "ESNext",
 		"esModuleInterop": true,
 		"moduleResolution": "Node",
-		"removeComments": true
+		"removeComments": true,
+		"incremental": true
 	}
 }
