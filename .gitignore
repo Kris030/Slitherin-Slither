@@ -5,7 +5,6 @@ package-lock.json
 
 # ts
 out
-.tsbuildinfo
 
 config.ts
 test
