@@ -19,6 +19,6 @@
 	"scripts": {
 		"test": "nodemon --enable-source-maps",
 		"build": "tsc",
-		"start": "node index.js"
+		"start": "node out/src/index.js"
 	}
 }
