@@ -4,9 +4,8 @@ node_modules
 package-lock.json
 
 # ts
-*.js
-*.js.map
-*.tsbuildinfo
+out
+.tsbuildinfo
 
 config.ts
 test

@@ -1,4 +1,5 @@
 import { ActivityOptions } from 'discord.js';
+
 export default [
 	{
 		name: 'you on the toilet',

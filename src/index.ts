@@ -1,21 +1,21 @@
-import config from './config.js';
-import { Client } from 'discord.js';
-import statuses from './statuses.js';
-import actions from './actions.js';
 import { getRandomElement } from './Utils/general.js';
+import statuses from '../res/statuses.js';
+import actions from '../res/actions.js';
+import { Client } from 'discord.js';
+import config from '../config.js';
 
 const client = new Client();
 
 client.on('guildCreate', g => {
-	if (!g.systemChannel.permissionsFor(client.user).has('SEND_MESSAGES'))
+	if (!g.systemChannel?.permissionsFor(client.user).has('SEND_MESSAGES'))
 		return;
-	g.systemChannel.send('I\'m here virgins');
+	g.systemChannel.send(`I'm here virgins`);
 });
 
 client.on('channelCreate', c => {
 	if (!c.isText() || c.type != 'text')
 		return;
-	if (!c.permissionsFor(client.user).has('SEND_MESSAGES'))
+	if (!c.permissionsFor(client.user)?.has('SEND_MESSAGES'))
 		return;
 	c.send('first lol');
 });

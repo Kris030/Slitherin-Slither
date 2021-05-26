@@ -1,6 +1,6 @@
-import { Await, MaybePromise } from './general.js';
-import MessageAction from '../MessageActions/MessageAction.js';
 import { ParseSupportedType, parseType, ParsedType } from './parsing.js';
+import { Await, MaybePromise } from './general.js';
+import MessageAction from '../MessageAction.js';
 
 export type Condition<T> = (this: MessageAction<T>, data: T) => MaybePromise<boolean>;
 export type SimpleAction<T> = (this: MessageAction<T>, data: T) => MaybePromise;

@@ -1,4 +1,4 @@
-import MessageAction from '../MessageActions/MessageAction.js';
+import MessageAction from '../../src/MessageAction.js';
 
 export default [
 	new MessageAction()

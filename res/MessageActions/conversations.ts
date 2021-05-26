@@ -1,5 +1,5 @@
-import { PrefixCommand } from '../Utils/actions.js';
-import { textDialog, indexedDialog } from '../Utils/dialog.js';
+import { textDialog, indexedDialog } from '../../src/Utils/dialog.js';
+import { PrefixCommand } from '../../src/Utils/actions.js';
 
 export default [
 	PrefixCommand('sstoned')

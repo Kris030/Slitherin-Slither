@@ -1,5 +1,5 @@
-import { PrefixCommand } from '../Utils/actions.js';
-import { emojifyString } from '../Utils/emojis.js';
+import { PrefixCommand } from '../../src/Utils/actions.js';
+import { emojifyString } from '../../src/Utils/emojis.js';
 
 export default [
 	PrefixCommand('ssemojify', { parseFully: false })

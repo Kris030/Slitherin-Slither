@@ -1,5 +1,5 @@
+import { Channel, Message, User } from 'discord.js';
 import { MaybePromise } from './general';
-import { Channel, Message, TextChannel, User } from 'discord.js';
 
 export type DialogTree<P, A> = {
 	readonly prompt: P;

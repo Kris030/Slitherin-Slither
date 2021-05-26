@@ -1,5 +1,5 @@
-import canvas, { Image, } from 'canvas';
 import { MessageAttachment, User, ImageSize } from 'discord.js';
+import canvas, { Image, } from 'canvas';
 
 export async function putFaceOnImage(user: User, img: string | URL | Image, x: number, y: number, pSize?: ImageSize) {
     if (typeof img == 'string')

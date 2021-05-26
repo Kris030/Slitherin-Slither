@@ -1,6 +1,6 @@
-import { Parser } from 'expr-eval';
-import { client } from '../index.js';
 import { Channel, Guild, User } from 'discord.js';
+import { client } from '../index.js';
+import { Parser } from 'expr-eval';
 
 /**
  * Types that are supported by `parseType`.

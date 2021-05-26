@@ -1,7 +1,7 @@
+import { swap2d, MaybePromise } from '../../src/Utils/general.js';
+import { TypedPrefixCommand } from '../../src/Utils/actions.js';
+import { emojifyString } from '../../src/Utils/emojis.js';
 import { User, MessageReaction } from 'discord.js';
-import { TypedPrefixCommand } from '../Utils/actions.js';
-import { emojifyString } from '../Utils/emojis.js';
-import { swap2d, MaybePromise } from '../Utils/general.js';
 
 const games = new Set<string>();
 export default [
