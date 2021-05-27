@@ -3,7 +3,7 @@
 	"version": "1.0.0",
 	"type": "module",
 	"description": "My little dc bot. An all-in one discord bot with custom message actions and conditions.",
-	"main": "index.js",
+	"main": "out/src/index.js",
 	"author": "me I and myself",
 	"license": "none",
 	"dependencies": {
