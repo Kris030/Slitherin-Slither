@@ -36,6 +36,10 @@ client.on('guildCreate', g => {
 	}).save();
 });
 
+client.on('guildDelete', g => {
+	GuildModel.findByIdAndDelete(g.id).exec();
+});
+
 client.on('channelCreate', c => {
 	if (!c.isText() || c.type != 'text')
 		return;
