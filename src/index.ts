@@ -1,15 +1,39 @@
-import { getRandomElement } from './Utils/general.js';
+import { getRandomElement } from './utils/general.js';
+import GuildModel from '../res/models/Guild.js';
 import statuses from '../res/statuses.js';
 import actions from '../res/actions.js';
 import { Client } from 'discord.js';
 import config from '../config.js';
+import mongoose from 'mongoose';
 
 const client = new Client();
+
+try {
+	console.log('Starting up... Sanity check 🤡');
+	
+	await Promise.all([
+		client.login(config.token),
+		mongoose.connect(config.database.constructURL(), {
+			useNewUrlParser: true,
+			useUnifiedTopology: true,
+		})
+	]);
+} catch (err) {
+	console.log('Error while starting up:');
+	console.error(err);
+	console.log('Shutting down...');
+	await shutdownGracefully();
+}
+const db = mongoose.connection.db;
 
 client.on('guildCreate', g => {
 	if (!g.systemChannel?.permissionsFor(client.user).has('SEND_MESSAGES'))
 		return;
 	g.systemChannel.send(`I'm here virgins`);
+	
+	new GuildModel({
+		_id: g.id
+	}).save();
 });
 
 client.on('channelCreate', c => {
@@ -35,7 +59,7 @@ client.on('message', async msg => {
 	}
 });
 
-let statusInterval: NodeJS.Timeout;
+let statusInterval: NodeJS.Timeout = undefined;
 client.on('ready', () => {
 	console.log('Running daddy 🥵');
 
@@ -47,14 +71,17 @@ client.on('ready', () => {
 	statusInterval = setTimeout(setStatus, config.statusInterval);
 });
 
-process.on('SIGINT', () => {
+process.on('SIGINT', shutdownGracefully);
+
+async function shutdownGracefully() {
+	console.log('Shutting down daddy 🥵');
 	clearInterval(statusInterval);
 	client.destroy();
-	console.log('Shutting down daddy 🥵');
-});
+	await mongoose.connection.close();
+	console.log('Shutdown succesful');
 
-client.login(config.token);
-
+	process.exit(0);
+}
 export {
-	client
+	client, db, shutdownGracefully
 };

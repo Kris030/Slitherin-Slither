@@ -1,7 +1,7 @@
 import { PrefixCommand } from '../../src/utils/actions.js';
 import { emojifyString } from '../../src/utils/emojis.js';
 
-export default [
+export default () => [
 	PrefixCommand('ssemojify', { parseFully: false })
 		.action(async function(data) {
 			await this.msg.channel.send(emojifyString(data[0]), {

@@ -1,4 +1,4 @@
-import { ActionErrorHandler, Middleware, Condition, SimpleAction } from './Utils/actions.js';
+import { ActionErrorHandler, Middleware, Condition, SimpleAction } from './utils/actions.js';
 import { Message } from 'discord.js';
 
 enum ActionType {

@@ -1,7 +1,7 @@
 import { textDialog, indexedDialog } from '../../src/utils/dialog.js';
 import { PrefixCommand } from '../../src/utils/actions.js';
 
-export default [
+export default () => [
 	PrefixCommand('sstoned')
 		.action(async function() {
 			textDialog(this.msg.channel, this.msg.author, {

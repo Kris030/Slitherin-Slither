@@ -1,6 +1,6 @@
 import { TypedPrefixCommand } from '../../src/utils/actions.js';
 
-export default [
+export default () => [
 	TypedPrefixCommand('ssrand', {}, Number, Number, Boolean)
 		.action(function(args) {
 			let n = Math.random() * args[1] + args[0];
