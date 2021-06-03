@@ -12,7 +12,7 @@ export default () => [
 	...emojify(),
 	...reactions(),
 	...conversations(),
-	//...game(),
+	...game(),
 	...misc(),
 	...economy(),
 ] as any as MessageAction<Message>[];
