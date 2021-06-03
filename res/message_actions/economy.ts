@@ -1,75 +1,70 @@
-import GuildUser, { GuildUserType } from '../models/GuildUser.js';
-import { PrefixCommand, SubbedCommand, TypedPrefixCommand } from '../../src/utils/actions.js';
-import { User } from 'discord.js';
+import { PrefixCommand, TypedPrefixCommand } from '../../src/utils/actions.js';
+import GuildUser from '../models/GuildUser.js';
+import { Guild, User } from 'discord.js';
+
+async function getGuildUserDocument(user: User, saveOnCreate = false) {
+	const u = user.id;
+	
+	let e = await GuildUser.findById(u).exec();
+
+	if (e)
+		return e;
+
+	console.log('creating new GuildUser');
+	e = new GuildUser({ _id: u });
+
+	if (saveOnCreate)
+		await e.save();
+
+	return e;
+}
+
+async function getGuildUserServerEntry(user: User, server: Guild | string, saveOnCreate = false) {
+	return (await getGuildUserDocument(user)).getServer(server, saveOnCreate);
+}
 
 export default () => [
 	
 	TypedPrefixCommand('ssbalance', {}, User)
 		.action(async function([ user ]) {
-			try {
-				const document = await GuildUser.findById(user.id).exec();
-				
-				this.msg.channel.send(document ? document.economy.balance.toString() + '$' : 'use `sseconomy join` to use my economy system fag');
-			} catch (error) {
-				console.error(error);
-			}
+			const gus = await getGuildUserServerEntry(user, this.msg.guild, true);
+			await this.msg.channel.send(gus.economy.balance + '€');
 		}),
-	
-	SubbedCommand('sseconomy', {
-		'join': async function() {
-			const u = this.msg.author.id;
-
-			if (await GuildUser.findById(u).exec())
-				return void this.msg.channel.send('fuck you, already in');
-			
-			await GuildUser.create({
-				_id: u,
-				economy: {
-					balance: 0,
-					lastpayday: 0
-				}
-			});
-
-			this.msg.channel.send('well shit, wellcum to the club');
-		}
-	}),
 
 	PrefixCommand('sspayday')
 		.action(async function() {
 			const mooney = Math.floor(Math.random() * 100);
 
-			const u = await GuildUser.findById(this.msg.author.id).exec();
-			if (!u)
-				return void this.msg.channel.send('use `sseconomy join` to use my economy system fag');
+			const u = await getGuildUserDocument(this.msg.author),
+				e = (await u.getServer(this.msg.guild)).economy;
 
-			try {
+			const cooldown = 1000 * 30;
 
-				const cooldown = 1000 * 30;
+			const d = e.lastPayday + cooldown - Date.now();
+			if (d > 0) {
+				const p = new Date(d);
+				
+				let pp = '';
+				if (p.getUTCHours() > 0)
+					pp += p.getUTCHours() + 'h ';
+				if (p.getMinutes() > 0)
+					pp += p.getMinutes() + 'm ';
+				if (p.getSeconds() > 0)
+					pp += p.getSeconds() + 's';
 
-				const d = u.economy.lastPayday + cooldown - Date.now();
-				if (d > 0) {
-					const p = new Date(d);
-					
-					let pp = '';
-					if (p.getUTCHours() > 0)
-						pp += p.getUTCHours() + 'h ';
-					if (p.getMinutes() > 0)
-						pp += p.getMinutes() + 'm ';
-					if (p.getSeconds() > 0)
-						pp += p.getSeconds() + 's';
+				if (pp === '')
+					pp = 'less then a second you impatient bastard';
 
-					if (pp === '')
-						pp = 'less then a second you impatient bastard';
-
-					this.msg.channel.send('fuck you, ' + pp + ' left until next payday');
-					return;
-				}
-			} catch (err) {
-				console.error(err);
+				this.msg.channel.send('fuck you, time left: ' + pp);
+				return;
 			}
 
-			u.economy.balance += mooney;
-			u.economy.lastPayday = Date.now();
+			let str = e.balance + '€ -> ';
+
+			e.balance += mooney;
+			e.lastPayday = Date.now();
+			u.markModified('trackedServers');
+
 			await u.save();
 			
 			this.msg.channel.send(`you got ${mooney}$`);
