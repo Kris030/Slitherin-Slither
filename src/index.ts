@@ -9,6 +9,7 @@ import mongoose from 'mongoose';
 
 const client = new Client();
 
+let statusInterval: NodeJS.Timeout = undefined;
 try {
 	console.log('Starting up... Sanity check 🤡');
 	
@@ -64,7 +65,6 @@ client.on('message', async msg => {
 	}
 });
 
-let statusInterval: NodeJS.Timeout = undefined;
 client.on('ready', () => {
 	console.log('Running daddy 🥵');
 
