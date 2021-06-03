@@ -2,10 +2,13 @@ import { Channel, Guild, User } from 'discord.js';
 import { client } from '../index.js';
 import { Parser } from 'expr-eval';
 
+
+export const ParseableTypes = [Number, BigInt, Object, User, Channel, URL, Date, Boolean, String, RegExp];
+
 /**
  * Types that are supported by `parseType`.
  */
-export type ParseSupportedType = StringConstructor | NumberConstructor | BooleanConstructor | DateConstructor | BigIntConstructor | RegExpConstructor | Object | User | Channel | URL;
+export type ParseSupportedType = (typeof ParseableTypes[number])['prototype'];
 
 /**
  * A type that maps primitive type constructors to their actual types for `ParseSupportedType`s.
@@ -40,23 +43,57 @@ const mathParser = new Parser();
  * @param type The type to parse as.
  */
 export function parseType<T extends ParseSupportedType>(string: string, type: T): ParsedType<T> {
-	let ret: any;
+	let ret: ParseSupportedType;
 	switch (type as ParseSupportedType) {
-		case String: ret = string; break;
-		case Number: ret = mathParser.evaluate(string); break;
-		case Boolean: ret = Boolean(string); break;
-		case Date: ret = new Date(string); break;
-		case User: ret = getUserFromMention(string); break;
-		case Channel: ret = getChannelFromMention(string); break;
-		case URL: ret = new URL(string); break;
-		case BigInt: ret = BigInt(string); break;
-		case RegExp: ret = new RegExp(string); break;
-		case Object: ret = JSON.parse(string); break;
-		default: throw 'Unsupported type or value ' + type;
+
+		case String:
+			ret = string;
+			break;
+
+		case Number:
+			ret = mathParser.evaluate(string);
+			break;
+
+		case Boolean:
+			ret = Boolean(string);
+			break;
+
+		case Date:
+			ret = new Date(string);
+			if (Number.isNaN(ret.valueOf()))
+				throw 'Failed to parse date';
+			break;
+
+		case User:
+			ret = getUserFromMention(string);
+			break;
+
+		case Channel:
+			ret = getChannelFromMention(string);
+			break;
+
+		case URL:
+			ret = new URL(string);
+			break;
+
+		case BigInt:
+			ret = BigInt(string);
+			break;
+			
+		case RegExp:
+			ret = new RegExp(string);
+			break;
+
+		case Object:
+			ret = JSON.parse(string);
+			break;
+
+		default:
+			throw 'Unsupported type or value ' + type;
 	}
-	if (ret === undefined)
+	if (ret == null)
 		throw 'Parse returned undefined';
-	return ret;
+	return ret as any;
 }
 
 /**
