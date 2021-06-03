@@ -79,7 +79,7 @@ client.on('ready', () => {
 process.on('SIGINT', shutdownGracefully);
 
 async function shutdownGracefully() {
-	console.log('Shutting down daddy 🥵');
+	console.log('Shutting down daddy 🦎');
 	clearInterval(statusInterval);
 	client.destroy();
 	await mongoose.connection.close();
@@ -87,6 +87,7 @@ async function shutdownGracefully() {
 
 	process.exit(0);
 }
+
 export {
 	client, db, shutdownGracefully
 };
