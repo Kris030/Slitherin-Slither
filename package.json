@@ -18,8 +18,8 @@
 		"ytsearcher": "^1.2.3"
 	},
 	"scripts": {
-		"test": "node . --enable-source-maps",
+		"test": "node --enable-source-maps --experimental-json-modules --no-warnings .",
 		"build": "tsc",
-		"start": "node ."
+		"start": "node --experimental-json-modules ."
 	}
 }
