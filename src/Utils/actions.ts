@@ -99,66 +99,62 @@ TypedPrefixCommand = <T extends ParseSupportedType[]>(prefix: string, { defaultE
 	PrefixCommand(prefix, { defaultErrorHandler, parseFully, ignoreEmpty })
 	.middleware(typeParser(...types)),
 
-SubbedCommand = (prefix: string, commands: SubbedCommandType, { defaultErrorHandler = undefined as ActionErrorHandler<string>, ignoreEmpty = true } = {}) =>
-	PrefixCommand(prefix, { ignoreEmpty, defaultErrorHandler })
-		.action(async function(args) {
+SubbedAction = (commands: SubbedCommandType): SimpleAction<string[]> =>
+	async function(args) {
+		for (; commands ;) {
+			const s = args[0];
+			
+			if (!commands.hasOwnProperty(s))
+				return;
+			
+			args.splice(0, 1);
+			
+			const v = commands[s];
 
-			for (; commands ;) {
-				const s = args[0];
-				
-				if (!commands.hasOwnProperty(s))
-					return;
-				
-				args.splice(0, 1);
-				
-				const v = commands[s];
+			switch (typeof v) {
 
-				switch (typeof v) {
+			case 'function':
+				this.temp = v;
+				await this.temp(args);
+				return
 
-					case 'function':
-						this.temp = v;
-						await this.temp(args);
-						return
-					
-					case 'object':
-						commands = v;
-						break;
-						
-				}
+			case 'object':
+				commands = v;
+				break;
 
 			}
+
+		}
+	},
+TypedSubbedCommand = (commands: TypedSubbedCommandType): SimpleAction<string[]> =>
+	async function(args) {
+
+		for (; commands ;) {
+			const s = args[0];
 			
-		}),
-TypedSubbedCommand = (prefix: string, commands: TypedSubbedCommandType, { defaultErrorHandler = undefined as ActionErrorHandler<string>, ignoreEmpty = true } = {}) =>
-	PrefixCommand(prefix, { ignoreEmpty, defaultErrorHandler })
-		.action(async function(args) {
-
-			for (; commands ;) {
-				const s = args[0];
-				
-				if (!commands.hasOwnProperty(s))
-					return;
-				
-				args.splice(0, 1);
-				
-				const v = commands[s];
-
-				if (v.handler && v.types) {
-					this.temp = v.handler;
-					
-					for (let i = 0; i < args.length; i++)
-						args[i] = parseType(args[i], v.types[i]);
-
-					await this.temp(args);
-				} else
-					//@ts-ignore
-					commands = v;
-
-			}
+			if (!commands.hasOwnProperty(s))
+				return;
 			
-		}), inGuild: Condition<any> = function() {
-			return this.msg.guild != undefined;
-		};
+			args.splice(0, 1);
+			
+			const v = commands[s];
+
+			if (v.handler && v.types) {
+				this.temp = v.handler;
+				
+				for (let i = 0; i < args.length; i++)
+					args[i] = parseType(args[i], v.types[i]);
+
+				await this.temp(args);
+			} else
+				//@ts-ignore
+				commands = v;
+
+		}
+			
+}, inGuild: Condition<any> = function() {
+	return this.msg.guild != undefined;
+};
 
 type TypeParserOut<T extends ParseSupportedType> = {
 	[K in keyof T]: Await<ParsedType<T[K]>>;
