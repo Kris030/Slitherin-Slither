@@ -10,7 +10,6 @@ async function getGuildUserDocument(user: User, saveOnCreate = false) {
 	if (e)
 		return e;
 
-	console.log('creating new GuildUser');
 	e = new GuildUser({ _id: u });
 
 	if (saveOnCreate)
