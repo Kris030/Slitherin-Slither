@@ -1,10 +1,10 @@
 import { getRandomElement } from './utils/general.js';
 import { constructMongoURL } from './utils/database.js';
 import GuildModel from '../res/models/Guild.js';
-import statuses from '../res/statuses.js';
-import config from '../config.json';
+import statuses from '../res/statuses.json';
 import actions from '../res/actions.js';
-import { Client } from 'discord.js';
+import config from '../config.json';
+import { ActivityOptions, Client } from 'discord.js';
 import mongoose from 'mongoose';
 
 const client = new Client();
@@ -70,7 +70,7 @@ client.on('ready', () => {
 
 	const setStatus = () => {
 		const { name, options } = getRandomElement(statuses);
-		client.user.setActivity(name, options);
+		client.user.setActivity(name, options as ActivityOptions);
 	};
 	setStatus();
 	statusInterval = setTimeout(setStatus, config.statusInterval);
