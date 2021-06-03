@@ -149,14 +149,16 @@ TypedSubbedCommand = (prefix: string, commands: TypedSubbedCommandType, { defaul
 					for (let i = 0; i < args.length; i++)
 						args[i] = parseType(args[i], v.types[i]);
 
-					return void await this.temp(args);
+					await this.temp(args);
 				} else
 					//@ts-ignore
 					commands = v;
 
 			}
 			
-		});
+		}), inGuild: Condition<any> = function() {
+			return this.msg.guild != undefined;
+		};
 
 type TypeParserOut<T extends ParseSupportedType> = {
 	[K in keyof T]: Await<ParsedType<T[K]>>;

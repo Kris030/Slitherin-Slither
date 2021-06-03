@@ -4,7 +4,7 @@ import { emojifyString } from '../../src/utils/emojis.js';
 import { User, MessageReaction } from 'discord.js';
 
 const games = new Set<string>();
-export default function() { return [
+export default () => [
 	TypedPrefixCommand('ssgame', {}, Number, Number)
 		.condition(async function([w, h]) {
 			if (games.has(this.msg.author.id)) {
@@ -145,4 +145,4 @@ export default function() { return [
 			});
 
 		})
-]};
+];

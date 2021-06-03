@@ -1,4 +1,4 @@
-import { PrefixCommand, TypedPrefixCommand } from '../../src/utils/actions.js';
+import { inGuild, PrefixCommand, TypedPrefixCommand } from '../../src/utils/actions.js';
 import GuildUser from '../models/GuildUser.js';
 import { Guild, User } from 'discord.js';
 
@@ -26,12 +26,14 @@ async function getGuildUserServerEntry(user: User, server: Guild | string, saveO
 export default () => [
 	
 	TypedPrefixCommand('ssbalance', {}, User)
+		.condition(inGuild)
 		.action(async function([ user ]) {
 			const gus = await getGuildUserServerEntry(user, this.msg.guild, true);
 			await this.msg.channel.send(gus.economy.balance + '€');
 		}),
 
 	PrefixCommand('sspayday')
+		.condition(inGuild)
 		.action(async function() {
 			const mooney = Math.floor(Math.random() * 100);
 

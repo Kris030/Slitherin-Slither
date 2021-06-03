@@ -3,7 +3,7 @@ import mongoose from 'mongoose';
 
 export interface TrackedServerType {
 	_id: string,
-	economy?: {
+	economy: {
 		balance: number,
 		lastPayday: number,
 	},
@@ -42,6 +42,8 @@ GuildUserSchema.methods.getServer = async function(this: GuildUserType & mongoos
 	let f = this.trackedServers.find(s => s._id === sID);
 
 	if (!f) {
+
+		// @ts-expect-error economy doesn't actually need to set
 		this.trackedServers.push({ _id: sID });
 		f = this.trackedServers[0];
 		if (saveOnCreate)

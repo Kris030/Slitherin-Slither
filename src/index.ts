@@ -2,9 +2,9 @@ import { getRandomElement } from './utils/general.js';
 import { constructMongoURL } from './utils/database.js';
 import GuildModel from '../res/models/Guild.js';
 import statuses from '../res/statuses.js';
+import * as config from '../config.json';
 import actions from '../res/actions.js';
 import { Client } from 'discord.js';
-import config from '../config.json';
 import mongoose from 'mongoose';
 
 const client = new Client();
@@ -28,7 +28,7 @@ try {
 const db = mongoose.connection.db;
 
 client.on('guildCreate', g => {
-	if (!g.systemChannel?.permissionsFor(client.user).has('SEND_MESSAGES'))
+	if (!g.systemChannel?.permissionsFor(client.user)?.has('SEND_MESSAGES'))
 		return;
 	g.systemChannel.send(`I'm here virgins`);
 	

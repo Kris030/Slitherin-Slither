@@ -3,9 +3,10 @@ import { SubbedCommand, TypedPrefixCommand } from '../../src/utils/actions.js';
 const configs = new Map<string, string>();
 export default () => [
 	TypedPrefixCommand('ssrand', {}, Number, Number, Boolean)
-		.action(function(args) {
-			let n = Math.random() * args[1] + args[0];
-			if (!args[2])
+		.action(function([min, max, round]) {
+			
+			let n = Math.random() * max + min;
+			if (!round)
 				n = Math.round(n);
 
 			this.msg.channel.send('Your number: ' + n);
