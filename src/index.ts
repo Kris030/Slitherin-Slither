@@ -1,10 +1,10 @@
-import { getRandomElement } from './utils/general.js';
 import { constructMongoURL } from './utils/database.js';
+import { getRandomElement } from './utils/general.js';
+import { ActivityOptions, Client } from 'discord.js';
 import GuildModel from '../res/models/Guild.js';
 import statuses from '../res/statuses.json';
 import actions from '../res/actions.js';
 import config from '../config.json';
-import { ActivityOptions, Client } from 'discord.js';
 import mongoose from 'mongoose';
 
 const client = new Client();
