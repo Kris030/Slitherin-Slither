@@ -6,9 +6,9 @@ enum ActionType {
 	CONDITION,
 	SIMPLE_ACTION
 }
+
 export default class MessageAction<T = Message> {
 
-	public temp: any;
 	private data: T;
 
 	private defaultErrorHandler: ActionErrorHandler<any>;
@@ -64,11 +64,23 @@ export default class MessageAction<T = Message> {
 		return this;
 	}
 
-	public msg: Message;
+	private _msg: Message;
+	public get msg() {
+		return this._msg;
+	}
+	
+	public reply: Message['channel']['send'] = function(...args: any[]) {
+		return this.channel.send(...args);
+	}
+
+	public get channel() { return this.msg.channel; }
+	public get author() { return this.msg.author; }
+	public temp: any;
+
 	private currentError: ActionErrorHandler<T>;
 	private currentAction: Middleware<T, any> | Condition<T> | SimpleAction<T>;
 	public async run(msg: Message): Promise<boolean> {
-		this.data = this.msg = msg as any;
+		this.data = this._msg = msg as any;
 		let ret = true;
 
 		loop:
@@ -107,7 +119,7 @@ export default class MessageAction<T = Message> {
 
 		await this.final?.(this.data);
 
-		this.currentAction = this.currentError = this.data = this.msg = this.temp = null;
+		this.currentAction = this.currentError = this.data = this._msg = this.temp = null;
 		return ret;
 	}
 }
