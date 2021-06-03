@@ -7,23 +7,23 @@ const games = new Set<string>();
 export default () => [
 	TypedPrefixCommand('ssgame', {}, Number, Number)
 		.condition(async function([w, h]) {
-			if (games.has(this.msg.author.id)) {
-				await this.msg.channel.send('fuck off can\'t start another game');
+			if (games.has(this.author.id)) {
+				await this.reply('fuck off can\'t start another game');
 				return false;
 			}
 
 			if (w <= 0 || w > 10) {
-				await this.msg.channel.send('Width must be between 1 and 10');
+				await this.reply('Width must be between 1 and 10');
 				return false;
 			}
 			if (h < 0 || h > 10) {
-				await this.msg.channel.send('Height must be between 1 and 10');
+				await this.reply('Height must be between 1 and 10');
 				return false;
 			}
 			return true;
 		})
 		.action(async function([w, h]) {
-			const user = this.msg.author, channel = this.msg.channel, map: GameObject[][] = new Array(w);
+			const user = this.author, channel = this.msg.channel, map: GameObject[][] = new Array(w);
 			games.add(user.id);
 
 			class Point {
@@ -92,9 +92,9 @@ export default () => [
 			}, renderHeader = () => `<@${user.id}> 's game`,
 			renderFooter = () => emojifyString(statusText + '\nScore: 0'),
 
-			headerMessage = await this.msg.channel.send(renderHeader()),
-			mapMessage = await this.msg.channel.send(renderMap()),
-			footerMessage = await this.msg.channel.send(renderFooter()),
+			headerMessage = await this.reply(renderHeader()),
+			mapMessage = await this.reply(renderMap()),
+			footerMessage = await this.reply(renderFooter()),
 			
 			editMessages = () => Promise.all([
 				headerMessage.edit(renderHeader()),

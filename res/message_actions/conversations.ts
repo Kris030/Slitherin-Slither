@@ -4,7 +4,7 @@ import { PrefixCommand } from '../../src/utils/actions.js';
 export default () => [
 	PrefixCommand('sstoned')
 		.action(async function() {
-			textDialog(this.msg.channel, this.msg.author, {
+			textDialog(this.msg.channel, this.author, {
 				prompt: 'you stoned?',
 				responses: [
 					{
@@ -38,7 +38,7 @@ export default () => [
 
 	PrefixCommand('sshop')
 	.action(async function() {
-		indexedDialog(this.msg.channel, this.msg.author, {
+		indexedDialog(this.msg.channel, this.author, {
 			prompt: 'hey, watcha doin here?',
 			responses: [
 				{

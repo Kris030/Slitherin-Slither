@@ -29,7 +29,7 @@ export default () => [
 		.condition(inGuild)
 		.action(async function([ user ]) {
 			const gus = await getGuildUserServerEntry(user, this.msg.guild, true);
-			await this.msg.channel.send(gus.economy.balance + '€');
+			await this.reply(gus.economy.balance + '€');
 		}),
 
 	PrefixCommand('sspayday')
@@ -37,7 +37,7 @@ export default () => [
 		.action(async function() {
 			const mooney = Math.floor(Math.random() * 100);
 
-			const u = await getGuildUserDocument(this.msg.author),
+			const u = await getGuildUserDocument(this.author),
 				e = (await u.getServer(this.msg.guild)).economy;
 
 			const cooldown = 1000 * 30;
@@ -57,7 +57,7 @@ export default () => [
 				if (pp === '')
 					pp = 'less then a second you impatient bastard';
 
-				this.msg.channel.send('fuck you, time left: ' + pp);
+				this.reply('fuck you, time left: ' + pp);
 				return;
 			}
 
@@ -69,6 +69,6 @@ export default () => [
 
 			await u.save();
 			
-			this.msg.channel.send(`you got ${mooney}$`);
+			this.reply(`you got ${mooney}$`);
 		})
 ];

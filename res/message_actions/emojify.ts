@@ -4,7 +4,7 @@ import { emojifyString } from '../../src/utils/emojis.js';
 export default () => [
 	PrefixCommand('ssemojify', { parseFully: false })
 		.action(async function(data) {
-			await this.msg.channel.send(emojifyString(data[0]), {
+			await this.reply(emojifyString(data[0]), {
 				split: {
 					char: ' '
 				}
@@ -13,7 +13,7 @@ export default () => [
 	
 	PrefixCommand('ssemojify2', { parseFully: false })
 		.action(async function(data) {
-			await this.msg.channel.send(emojifyString(data[0]), {
+			await this.reply(emojifyString(data[0]), {
 				code: true
 			});
 		}),	
