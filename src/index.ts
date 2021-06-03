@@ -1,9 +1,10 @@
 import { getRandomElement } from './utils/general.js';
+import { constructMongoURL } from './utils/database.js';
 import GuildModel from '../res/models/Guild.js';
 import statuses from '../res/statuses.js';
 import actions from '../res/actions.js';
 import { Client } from 'discord.js';
-import config from '../config.js';
+import config from '../config.json';
 import mongoose from 'mongoose';
 
 const client = new Client();
@@ -13,7 +14,7 @@ try {
 	
 	await Promise.all([
 		client.login(config.token),
-		mongoose.connect(config.database.constructURL(), {
+		mongoose.connect(constructMongoURL(config.database), {
 			useNewUrlParser: true,
 			useUnifiedTopology: true,
 		})

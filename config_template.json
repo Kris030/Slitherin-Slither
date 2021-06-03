@@ -1,0 +1,10 @@
+{
+	"token": "<bot_token>",
+	"statusInterval": -1,
+	"database": {
+		"cluster": "<cluster>",
+		"databaseName": "<database_name>",
+		"username": "<username>",
+		"password": "<password>"
+	}
+}
