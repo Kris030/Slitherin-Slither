@@ -74,20 +74,23 @@ export default () => [
 	TypedPrefixCommand('ssbribe', {}, Number, User)
 		.condition(inGuild)
 		.action(async function([ amount, to ]) {
-			
-			const u = await getGuildUserDocument(this.author),
-			      e = (await u.getServer(this.msg.guild)).economy;
 
-			if (e.balance < to) {
-				this.reply('fuck you don't have enough mooney');
+			const u = await getGuildUserDocument(this.author),
+				  e = (await u.getServer(this.msg.guild)).economy;
+
+			if (e.balance < amount) {
+				this.reply(`fuck you don't have enough mooney`);
 				return;
 			}
 
 			const u2 = await getGuildUserDocument(to),
-			      e2 = (await u.getServer(this.msg.guild)).economy;
+				  e2 = (await u2.getServer(this.msg.guild)).economy;
 
 			e.balance -= amount;
 			e2.balance += amount;
+
+			u.markModified('trackedServers');
+			u2.markModified('trackedServers');
 
 			await Promise.all([u.save(), u2.save()]);
 
