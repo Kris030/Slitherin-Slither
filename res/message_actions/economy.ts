@@ -75,6 +75,11 @@ export default () => [
 		.condition(inGuild)
 		.action(async function([ amount, to ]) {
 
+			if (this.author == to) {
+				this.reply('you stoned?');
+				return;
+			}
+
 			const u = await getGuildUserDocument(this.author),
 				  e = (await u.getServer(this.msg.guild)).economy;
 
