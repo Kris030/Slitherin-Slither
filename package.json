@@ -14,7 +14,7 @@
 		"tweetnacl": "^1.0.3"
 	},
 	"scripts": {
-		"test": "node --enable-source-maps --experimental-json-modules --no-warnings .",
+		"dev": "node --enable-source-maps --experimental-json-modules --no-warnings .",
 		"build": "tsc",
 		"start": "node --experimental-json-modules ."
 	}

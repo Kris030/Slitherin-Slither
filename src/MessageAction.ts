@@ -75,6 +75,7 @@ export default class MessageAction<T = Message> {
 
 	public get channel() { return this.msg.channel; }
 	public get author() { return this.msg.author; }
+	public get guild() { return this.msg.guild; }
 	public temp: any;
 
 	private currentError: ActionErrorHandler<T>;

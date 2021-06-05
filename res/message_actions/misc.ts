@@ -1,6 +1,7 @@
 import { inGuild, PrefixCommand, SubbedAction, TypedPrefixCommand } from '../../src/utils/actions.js';
 import { ParseableTypes, parseType } from '../../src/utils/parsing.js';
 import { arrayToString } from '../../src/utils/general.js';
+import GuildModel from '../models/Guild.js';
 
 const configs = new Map<string, string>();
 export default () => [
@@ -41,18 +42,26 @@ export default () => [
 			this.reply('Your number: ' + n);
 		}),
 
-	PrefixCommand('ssconfig')
+		PrefixCommand('ssconfig')
 		.condition(inGuild)
 		.action(SubbedAction({
-			get([ prop ]) {
-				this.reply(prop + ': ' + configs.get(prop));
-			}, set([ prop, ...others]) {
-				let s = others.reduce((p, c) => p + '\n' + c);
-				configs.set(prop, s);
-				this.reply(`Set ${prop} to ` + s);
-			}, list() {
+			async get([ key ]) {
+				const g = await GuildModel.findById(this.guild.id);
+				const val = g.config.custom.get(key);
+
+				this.reply(val ? (key + ': ' + val) : `property doesn't exist`);
+			}, async set([ key, ...others]) {
+				const g = await GuildModel.findById(this.guild.id);
+				let value = others.reduce((p, c) => p + '\n' + c);
+
+				g.config.custom.set(key, value);
+				await g.save();
+
+				this.reply(`Set ${key} to ` + value);
+			}, async list() {
+				const g = await GuildModel.findById(this.guild.id);
 				let m = '';
-				for (const entry of configs.entries())
+				for (const entry of g.config.custom.entries())
 					m += entry[0] + `: ${entry[1]}\n`;
 				
 				this.reply(m ? m : 'nothing here...');
