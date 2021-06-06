@@ -30,3 +30,5 @@ export const GuildSchema = new mongoose.Schema<GuildType>({
 });
 
 export default mongoose.model<GuildType>('Guild', GuildSchema);
+
+export type GuildModelType = GuildType & mongoose.Document;

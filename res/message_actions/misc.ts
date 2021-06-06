@@ -3,7 +3,6 @@ import { ParseableTypes, parseType } from '../../src/utils/parsing.js';
 import { arrayToString } from '../../src/utils/general.js';
 import GuildModel from '../models/Guild.js';
 
-const configs = new Map<string, string>();
 export default () => [
 
 	PrefixCommand('ssbounce')
