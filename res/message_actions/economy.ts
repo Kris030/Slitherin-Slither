@@ -27,7 +27,7 @@ export default () => [
 	TypedPrefixCommand('ssbalance', {}, User)
 		.condition(inGuild)
 		.action(async function([ user ]) {
-			const gus = await getGuildUserServerEntry(user, this.msg.guild, true);
+			const gus = await getGuildUserServerEntry(user, this.guild, true);
 			await this.reply(gus.economy.balance + '€');
 		}),
 
@@ -37,7 +37,7 @@ export default () => [
 			const mooney = Math.floor(Math.random() * 100);
 
 			const u = await getGuildUserDocument(this.author),
-				e = (await u.getServer(this.msg.guild)).economy;
+				e = (await u.getServer(this.guild)).economy;
 
 			const cooldown = 1000 * 30;
 
@@ -59,8 +59,6 @@ export default () => [
 				this.reply('fuck you, time left: ' + pp);
 				return;
 			}
-
-			let str = e.balance + '€ -> ';
 
 			e.balance += mooney;
 			e.lastPayday = Date.now();
