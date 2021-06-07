@@ -8,24 +8,15 @@ export type Middleware<T, R> = (this: MessageAction<T>, data: T) => MaybePromise
 export type ActionErrorHandler<T> = (this: MessageAction<T>, data: T, error: any) => MaybePromise;
 
 export type CommandParserOptions = {
-    parseFully?: boolean;
+    // the amount of arguments to parse
+	parseCount?: number;
     ignoreEmpty?: boolean;
 };
 
-export const commandParser = ({ parseFully = true, ignoreEmpty = true }: CommandParserOptions = {}) =>
+export const commandParser = ({ parseCount = -1, ignoreEmpty = true }: CommandParserOptions = {}) =>
 (str => {
 	let args: string[] = [], tokenSeparator = /[\s\n]/;
 	
-	if (!parseFully) {
-		const ind = str.search(tokenSeparator);
-		if (ind == -1)
-			args.push(str);
-		else
-			args = [str.substr(0, ind), str.substr(ind + 1, str.length - ind)];
-			
-		return args;
-	}
-
 	const quotes = [`'`, `"`, '`'];
 	
 	let buff = '', inQuotes = false, escaped = false, quote: string;
@@ -54,6 +45,15 @@ export const commandParser = ({ parseFully = true, ignoreEmpty = true }: Command
 		if (!inQuotes && tokenSeparator.test(c)) {
 			args.push(buff);
 			buff = '';
+
+			if (parseCount > 0)
+				parseCount--;
+
+			if (parseCount <= 0) {
+				args.push(str.substr(i + 1));
+				break;
+			}
+
 			continue;
 		}
 
@@ -89,14 +89,14 @@ async unparsed => {
 	return Promise.all(args) as any;
 },
 
-PrefixCommand = (prefix: string, { defaultErrorHandler = undefined, parseFully = true, ignoreEmpty = true }: PrefixCommandOptions = {}) =>
+PrefixCommand = (prefix: string, { defaultErrorHandler = undefined, parseCount = -1, ignoreEmpty = true }: PrefixCommandOptions = {}) =>
 	new MessageAction(defaultErrorHandler)
 		.middleware(msg => msg.content)
-		.middleware(commandParser({ parseFully, ignoreEmpty }))
+		.middleware(commandParser({ parseCount, ignoreEmpty }))
 		.condition(prefixChecker(prefix)),
 
-TypedPrefixCommand = <T extends ParseSupportedType[]>(prefix: string, { defaultErrorHandler = undefined, parseFully = true, ignoreEmpty = true }: PrefixCommandOptions = {}, ...types: T) =>
-	PrefixCommand(prefix, { defaultErrorHandler, parseFully, ignoreEmpty })
+TypedPrefixCommand = <T extends ParseSupportedType[]>(prefix: string, { defaultErrorHandler = undefined, parseCount = -1, ignoreEmpty = true }: PrefixCommandOptions = {}, ...types: T) =>
+	PrefixCommand(prefix, { defaultErrorHandler, parseCount, ignoreEmpty })
 	.middleware(typeParser(...types)),
 
 SubbedAction = (commands: SubbedCommandType): SimpleAction<string[]> =>
