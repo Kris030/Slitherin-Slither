@@ -56,7 +56,7 @@ export default () => [
 				g.config.custom.set(key, value);
 				await g.save();
 
-				this.reply(`Set ${key} to `);
+				this.reply('Set it.');
 			}, async list() {
 				const g = await GuildModel.findById(this.guild.id);
 				let m = '';
