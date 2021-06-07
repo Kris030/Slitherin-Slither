@@ -53,7 +53,7 @@ export async function messageRecieved(msg: Message) {
 
 let statusInterval: NodeJS.Timeout = null;
 export async function clientReady() {
-	console.log('Running daddy 🥵');
+	console.log('Ready 👽');
 
 	const actualGuilds = client.guilds.cache.clone(),
 		  dbGuildEntries = await GuildModel.find({}).exec();

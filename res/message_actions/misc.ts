@@ -1,4 +1,4 @@
-import { inGuild, PrefixCommand, SubbedAction, TypedPrefixCommand } from '../../src/utils/actions.js';
+import { commandParser, inGuild, PrefixCommand, SubbedAction, TypedPrefixCommand } from '../../src/utils/actions.js';
 import { ParseableTypes, parseType } from '../../src/utils/parsing.js';
 import { arrayToString } from '../../src/utils/general.js';
 import GuildModel from '../models/Guild.js';
@@ -8,6 +8,11 @@ export default () => [
 	PrefixCommand('ssbounce')
 		.action(function(args) {
 			this.reply(arrayToString(args))
+		}),
+
+	TypedPrefixCommand('ssbouncex', { parseCount: 1 }, Number, String)
+		.action(function([parseCount, rest]) {
+			this.reply(arrayToString(commandParser({ parseCount }).call(this, rest)));
 		}),
 
 	PrefixCommand('ssparse')

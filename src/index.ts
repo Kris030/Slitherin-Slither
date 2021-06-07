@@ -16,6 +16,8 @@ try {
 		}),
 		client.login(config.token)
 	]);
+	console.log('Running daddy 🥵');
+
 } catch (err) {
 	console.log('Error while starting up:');
 	console.error(err);

@@ -13,8 +13,11 @@ export type CommandParserOptions = {
     ignoreEmpty?: boolean;
 };
 
-export const commandParser = ({ parseCount = -1, ignoreEmpty = true }: CommandParserOptions = {}) =>
+export const commandParser = <PC extends number>({ parseCount = -1 as PC, ignoreEmpty = true }: { parseCount?: PC; ignoreEmpty?:boolean;} = {}) =>
 (str => {
+	if (parseCount == 0)
+		return str;
+
 	let args: string[] = [], tokenSeparator = /[\s\n]/;
 	
 	const quotes = [`'`, `"`, '`'];
@@ -49,8 +52,8 @@ export const commandParser = ({ parseCount = -1, ignoreEmpty = true }: CommandPa
 			if (parseCount > 0)
 				parseCount--;
 
-			if (parseCount <= 0) {
-				args.push(str.substr(i + 1));
+			if (parseCount == 0) {
+				buff = str.substr(i + 1);
 				break;
 			}
 
@@ -77,7 +80,7 @@ export const commandParser = ({ parseCount = -1, ignoreEmpty = true }: CommandPa
 	args.push(buff);
 
 	return ignoreEmpty ? args : args.filter((t: string) => t != '');
-}) as Middleware<string, string[]>,
+}) as Middleware<string, PC extends 0 ? string : string[]>,
 
 prefixChecker: (prefix: string) => Condition<string[]> = prefix => data => data.splice(0, 1)[0] === prefix,
 
@@ -87,12 +90,12 @@ async unparsed => {
 	for (let i = 0; i < types.length; i++)
 		args[i] = parseType(unparsed[i], types[i]);
 	return Promise.all(args) as any;
-},
+}, // Promise.all(unparsed.map((v, i) => parseType(v, types[i]))) as any
 
 PrefixCommand = (prefix: string, { defaultErrorHandler = undefined, parseCount = -1, ignoreEmpty = true }: PrefixCommandOptions = {}) =>
 	new MessageAction(defaultErrorHandler)
 		.middleware(msg => msg.content)
-		.middleware(commandParser({ parseCount, ignoreEmpty }))
+		.middleware(commandParser({ parseCount: parseCount + 1, ignoreEmpty }))
 		.condition(prefixChecker(prefix)),
 
 TypedPrefixCommand = <T extends ParseSupportedType[]>(prefix: string, { defaultErrorHandler = undefined, parseCount = -1, ignoreEmpty = true }: PrefixCommandOptions = {}, ...types: T) =>
