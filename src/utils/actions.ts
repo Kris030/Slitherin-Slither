@@ -13,10 +13,10 @@ export type CommandParserOptions = {
     ignoreEmpty?: boolean;
 };
 
-export const commandParser = <PC extends number>({ parseCount = -1 as PC, ignoreEmpty = true }: { parseCount?: PC; ignoreEmpty?:boolean;} = {}) =>
+export const commandParser = ({ parseCount = -1, ignoreEmpty = true }: CommandParserOptions = {}) =>
 (str => {
 	if (parseCount == 0)
-		return str;
+		return [str];
 
 	let args: string[] = [], tokenSeparator = /[\s\n]/;
 	
@@ -80,7 +80,7 @@ export const commandParser = <PC extends number>({ parseCount = -1 as PC, ignore
 	args.push(buff);
 
 	return ignoreEmpty ? args : args.filter((t: string) => t != '');
-}) as Middleware<string, PC extends 0 ? string : string[]>,
+}) as Middleware<string, string[]>,
 
 prefixChecker: (prefix: string) => Condition<string[]> = prefix => data => data.splice(0, 1)[0] === prefix,
 

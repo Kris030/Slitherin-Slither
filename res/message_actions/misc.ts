@@ -12,7 +12,8 @@ export default () => [
 
 	TypedPrefixCommand('ssbouncex', { parseCount: 1 }, Number, String)
 		.action(function([parseCount, rest]) {
-			this.reply(arrayToString(commandParser({ parseCount }).call(this, rest)));
+			//@ts-expect-error
+			this.reply(arrayToString(commandParser({ parseCount })(rest)));
 		}),
 
 	PrefixCommand('ssparse')
