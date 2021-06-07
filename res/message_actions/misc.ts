@@ -48,7 +48,7 @@ export default () => [
 				const g = await GuildModel.findById(this.guild.id);
 				const val = g.config.custom.get(key);
 
-				this.reply(val ? (key + ': ' + val) : `property doesn't exist`);
+				this.reply(val ? val : `property doesn't exist`);
 			}, async set([ key, ...others]) {
 				const g = await GuildModel.findById(this.guild.id);
 				let value = others.reduce((p, c) => p + '\n' + c);
@@ -56,7 +56,7 @@ export default () => [
 				g.config.custom.set(key, value);
 				await g.save();
 
-				this.reply(`Set ${key} to ` + value);
+				this.reply(`Set ${key} to `);
 			}, async list() {
 				const g = await GuildModel.findById(this.guild.id);
 				let m = '';
