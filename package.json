@@ -7,15 +7,20 @@
 	"author": "me I and myself",
 	"license": "none",
 	"dependencies": {
+		"bufferutil": "^4.0.3",
 		"canvas": "^2.7.0",
 		"discord.js": "^12.5.1",
 		"expr-eval": "^2.0.2",
 		"mongoose": "^5.12.12",
-		"tweetnacl": "^1.0.3"
+		"utf-8-validate": "^5.0.5"
+	},
+	"devDependencies": {
+		"minify": "^7.0.2"
 	},
 	"scripts": {
 		"dev": "node --enable-source-maps --experimental-json-modules --no-warnings .",
-		"build": "tsc",
-		"start": "node --experimental-json-modules ."
+		"build": "build.sh",
+		"start": "node --experimental-json-modules .",
+		"clean": "rm -rf out"
 	}
 }
