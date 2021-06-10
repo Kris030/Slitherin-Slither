@@ -19,7 +19,7 @@
 	},
 	"scripts": {
 		"dev": "node --enable-source-maps --experimental-json-modules --no-warnings .",
-		"build": "build.sh",
+		"build": "./build.sh",
 		"start": "node --experimental-json-modules .",
 		"clean": "rm -rf out"
 	}
