@@ -2,7 +2,6 @@ import { Channel, Guild, User } from 'discord.js';
 import { client } from '../index.js';
 import { Parser } from 'expr-eval';
 
-
 export const ParseableTypes = [Number, BigInt, Object, User, Channel, URL, Date, Boolean, String, RegExp];
 
 /**

@@ -1,4 +1,4 @@
-import { ParseSupportedType, parseType, ParsedType } from './parsing.js';
+import { ParseSupportedType, parseType, ParsedType, ParseableTypes, PrimitiveParseSupportedType, PrimitiveConstructor } from './parsing.js';
 import { Await, MaybePromise } from './general.js';
 import MessageAction from '../MessageAction.js';
 
@@ -8,13 +8,13 @@ export type Middleware<T, R> = (this: MessageAction<T>, data: T) => MaybePromise
 export type ActionErrorHandler<T> = (this: MessageAction<T>, data: T, error: any) => MaybePromise;
 
 export type CommandParserOptions = {
-    // the amount of arguments to parse
+	// the amount of arguments to parse
 	parseCount?: number;
-    ignoreEmpty?: boolean;
+	ignoreEmpty?: boolean;
 };
 
 export const commandParser = ({ parseCount = -1, ignoreEmpty = true }: CommandParserOptions = {}) =>
-(str => {
+(str: string) => {
 	if (parseCount == 0)
 		return [str];
 
@@ -22,7 +22,7 @@ export const commandParser = ({ parseCount = -1, ignoreEmpty = true }: CommandPa
 	
 	const quotes = [`'`, `"`, '`'];
 	
-	let buff = '', inQuotes = false, escaped = false, quote: string;
+	let buff = '', inQuotes = false, escaped = false, quote: string, empty = true;
 	for (let i = 0; i < str.length; i++) {
 		let c = str[i];
 
@@ -45,7 +45,13 @@ export const commandParser = ({ parseCount = -1, ignoreEmpty = true }: CommandPa
 			}
 		}
 
-		if (!inQuotes && tokenSeparator.test(c)) {
+		const whitespace = tokenSeparator.test(c);
+		if (!whitespace)
+			empty = false;
+
+		if (!inQuotes && whitespace && (!ignoreEmpty || !empty)) {
+
+			empty = true;
 			args.push(buff);
 			buff = '';
 
@@ -79,26 +85,21 @@ export const commandParser = ({ parseCount = -1, ignoreEmpty = true }: CommandPa
 
 	args.push(buff);
 
-	return ignoreEmpty ? args : args.filter((t: string) => t != '');
-}) as Middleware<string, string[]>,
+	return args;
+},
 
 prefixChecker: (prefix: string) => Condition<string[]> = prefix => data => data.splice(0, 1)[0] === prefix,
 
 typeParser = <T extends ParseSupportedType[]>(...types: T): Middleware<string[], TypeParserOut<T>> =>
-async unparsed => {
-	const args = new Array(unparsed.length);
-	for (let i = 0; i < types.length; i++)
-		args[i] = parseType(unparsed[i], types[i]);
-	return Promise.all(args) as any;
-}, // Promise.all(unparsed.map((v, i) => parseType(v, types[i]))) as any
+	unparsed => Promise.all(unparsed.map((v, i) => parseType(v, types[i]))) as any,
 
-PrefixCommand = (prefix: string, { defaultErrorHandler = undefined, parseCount = -1, ignoreEmpty = true }: PrefixCommandOptions = {}) =>
+PrefixCommand = (prefix: string, { defaultErrorHandler = undefined, parseCount = -1e10, ignoreEmpty = true }: PrefixCommandOptions = {}) =>
 	new MessageAction(defaultErrorHandler)
 		.middleware(msg => msg.content)
 		.middleware(commandParser({ parseCount: parseCount + 1, ignoreEmpty }))
 		.condition(prefixChecker(prefix)),
 
-TypedPrefixCommand = <T extends ParseSupportedType[]>(prefix: string, { defaultErrorHandler = undefined, parseCount = -1, ignoreEmpty = true }: PrefixCommandOptions = {}, ...types: T) =>
+TypedPrefixCommand = <T extends ParseSupportedType[]>(prefix: string, { defaultErrorHandler = undefined, parseCount = -1e10, ignoreEmpty = true }: PrefixCommandOptions = {}, ...types: T) =>
 	PrefixCommand(prefix, { defaultErrorHandler, parseCount, ignoreEmpty })
 	.middleware(typeParser(...types)),
 
