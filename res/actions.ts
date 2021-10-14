@@ -5,6 +5,7 @@ import conversations from './message_actions/conversations.js';
 import reactions from './message_actions/reactions.js';
 import emojify from './message_actions/emojify.js';
 import economy from './message_actions/economy.js';
+import voice from './message_actions/voice.js';
 import game from './message_actions/game.js';
 import misc from './message_actions/misc.js';
 
@@ -15,4 +16,5 @@ export default () => [
 	...game(),
 	...misc(),
 	...economy(),
+	...voice(),
 ] as any as MessageAction<Message>[];

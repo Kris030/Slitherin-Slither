@@ -8,6 +8,18 @@ export function sleep(ms: number) {
 }
 
 /**
+ * Returns a cancellable promise for waiting an amount of milliseconds.
+ * @param ms The amount of time in milliseconds.
+*/
+export function cancellableSleep(ms: number) {
+	let id: NodeJS.Timeout;
+	return {
+		promise: new Promise<void>(res => id = setTimeout(res, ms)),
+		cancel: () => clearTimeout(id)
+	};
+}
+
+/**
  * Returns a promise for waiting an amount of milliseconds.
  * @param ms The amount of time in milliseconds.
 */
@@ -55,6 +67,14 @@ export function arrayToString(array: any[], { separator=', ', begin='[', end=']'
 	for (; i < l; i++)
 		str += array[i] + separator;
 	return str + array[i] + end;
+}
+
+export function random(min: number, max: number) {
+	return Math.random() * (max - min) + min;
+}
+
+export function randomInt(min: number, max: number) {
+	return Math.floor(Math.random() * (max - min + 1) + min);
 }
 
 /**

@@ -19,7 +19,9 @@ T extends NumberConstructor ? number :
 T extends BigIntConstructor ? bigint :
 T extends RegExpConstructor ? RegExp :
 T extends DateConstructor ? Date :
-T extends ObjectConstructor ? object : T;
+T extends object ? {
+	[key in keyof T]: PrimitiveConstructor<T[key]>;
+} : T;
 
 /**
  * Primitive verison of `ParseSupportedType`.
@@ -32,7 +34,9 @@ export type PrimitiveParseSupportedType = PrimitiveConstructor<ParseSupportedTyp
 export type ParsedType<T extends ParseSupportedType> =
 T extends (typeof User) ? Promise<User> :
 T extends (typeof Channel) ? Promise<Channel> :
-T extends (typeof URL) ? URL : PrimitiveConstructor<T>;
+T extends (typeof URL) ? URL :
+T extends [infer R] ? ParsedType<R>[] :
+PrimitiveConstructor<T>;
 
 const mathParser = new Parser();
 /**
@@ -42,57 +46,75 @@ const mathParser = new Parser();
  * @param type The type to parse as.
  */
 export function parseType<T extends ParseSupportedType>(string: string, type: T): ParsedType<T> {
-	let ret: ParseSupportedType;
-	switch (type as ParseSupportedType) {
+	let ret: any, failMessage: string;
+	
+	const hasDefault = typeof type !== 'function';
+	
+	if (string !== '') {
+		try {
+			switch ((hasDefault ? type.constructor : type) as ParseSupportedType) {
 
-		case String:
-			ret = string;
-			break;
+				case String:
+					ret = string;
+					break;
 
-		case Number:
-			ret = mathParser.evaluate(string);
-			break;
+				case Number:
+					if (Number.isNaN(ret = mathParser.evaluate(string)))
+						failMessage = 'Failed to parse number';
+					break;
 
-		case Boolean:
-			ret = Boolean(string);
-			break;
+				case Boolean:
+					ret = Boolean(string);
+					break;
 
-		case Date:
-			ret = new Date(string);
-			if (Number.isNaN(ret.valueOf()))
-				throw 'Failed to parse date';
-			break;
+				case Date:
+					ret = new Date(string);
+					if (Number.isNaN(ret.valueOf()))
+						failMessage = 'Failed to parse date';
+					break;
 
-		case User:
-			ret = getUserFromMention(string);
-			break;
+				case User:
+					ret = getUserFromMention(string);
+					break;
 
-		case Channel:
-			ret = getChannelFromMention(string);
-			break;
+				case Channel:
+					ret = getChannelFromMention(string);
+					break;
 
-		case URL:
-			ret = new URL(string);
-			break;
+				case URL:
+					ret = new URL(string);
+					break;
 
-		case BigInt:
-			ret = BigInt(string);
-			break;
-			
-		case RegExp:
-			ret = new RegExp(string);
-			break;
+				case BigInt:
+					ret = BigInt(string);
+					break;
+					
+				case RegExp:
+					ret = new RegExp(string);
+					break;
 
-		case Object:
-			ret = JSON.parse(string);
-			break;
+				case Object:
+					ret = JSON.parse(string);
+					break;
 
-		default:
-			throw 'Unsupported type or value ' + type;
+				default:
+					failMessage = `Unsupported type '${type}'`;
+					break;
+			}
+		} catch {
+			failMessage = `Failed to parse value "${string}" of type '${type}'`;
+		}
+	} else
+		failMessage = 'No default provided for empty string';
+
+	if (failMessage) {
+		if (hasDefault)
+			return type as any;
+		else
+			throw failMessage;
 	}
-	if (ret == null)
-		throw 'Parse returned undefined';
-	return ret as any;
+
+	return ret;
 }
 
 /**
@@ -104,7 +126,7 @@ export const mentionRegex = /^<(?:@!?)|#\d+>$/;
  * Tests a given string with `mentionRegex`.
  * @param str The string to test.
  */
-export function isMention(str: string): boolean {
+export function isMention(str: string) {
 	return mentionRegex.test(str);
 }
 
@@ -112,7 +134,7 @@ export function isMention(str: string): boolean {
  * Parses a string as a discord user mention.
  * @param string The string to parse.
  */
- export async function getUserFromMention(mention: string) {
+ export function getUserFromMention(mention: string) {
 	const matches = mention.match(/^<@!?(\d{18})>$/);
 	if (!matches)
 		throw 'Not a user mention!';

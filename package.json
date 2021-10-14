@@ -7,12 +7,14 @@
 	"author": "me I and myself",
 	"license": "none",
 	"dependencies": {
+		"@discordjs/opus": "^0.5.3",
 		"bufferutil": "^4.0.3",
 		"canvas": "^2.7.0",
 		"discord.js": "^12.5.1",
 		"expr-eval": "^2.0.2",
 		"mongoose": "^5.12.12",
-		"utf-8-validate": "^5.0.5"
+		"utf-8-validate": "^5.0.5",
+		"ytdl-core": "^4.9.1"
 	},
 	"devDependencies": {
 		"minify": "^7.0.2"

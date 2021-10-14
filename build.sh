@@ -1,8 +1,13 @@
+#!/bin/bash
 
-tsc
+if ! tsc; then
+	exit $?
+fi
 echo "Finished typescript compilation... 😳"
 
-node minify.js
+if ! node minify.js; then
+	exit $?
+fi
 echo "Finished minification... 😏"
 
-read -p "Done building... Press enter to continue! 🙉"
+read -rp "Done building... Press enter to continue! 🙉"

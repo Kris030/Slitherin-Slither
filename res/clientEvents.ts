@@ -1,50 +1,65 @@
-import { Channel, Guild, Message, ActivityOptions } from 'discord.js';
-import GuildModel, { GuildModelType } from './models/Guild.js';
+import { Channel, Guild, Message, ActivityOptions, GuildMember, User } from 'discord.js';
 import { getRandomElement } from '../src/utils/general.js';
+import { canSendMessage } from '../src/utils/discord.js';
+import GuildModel, { IGuild } from './models/Guild.js';
 import statuses from '../res/statuses.json';
 import { client } from '../src/index.js';
 import actions from '../res/actions.js';
 import config from '../config.json';
 import mongoose from 'mongoose';
 
-export async function guildJoined(g: Guild) {
-	if (!g.systemChannel?.permissionsFor(client.user)?.has('SEND_MESSAGES'))
-		return;
-	g.systemChannel.send(`I'm here virgins`);
-	
-	const gDoc = await new GuildModel({
-		_id: g.id
-	}).save();
+export async function handleJoinedGuildDB(g: Guild) {
+	GuildModel.create({
+		_id: g.id,
+	});
 }
 
-export async function guildLeft(guildID: Guild | string, dbEntry?: GuildModelType) {
-	if (typeof guildID === 'object')
-		guildID = guildID.id;
+export function guildJoined(g: Guild) {
+	
+	handleJoinedGuildDB(g);
 
-	if (dbEntry)
-		dbEntry.delete();
-	else {
-		GuildModel.findOneAndDelete({ _id: guildID });
-	}
+	if (canSendMessage(g.systemChannel))
+		g.systemChannel.send(`I'm here virgins`);
+	
+}
+
+export function handleLeftGuildDB(_id: string | IGuild) {
+	if (typeof _id === 'string')
+		GuildModel.findOneAndDelete({ _id });
+	else
+		_id.delete();
+}
+
+export function guildLeft(guildID: Guild | string, dbEntry?: IGuild) {
+	handleLeftGuildDB(dbEntry ?? (typeof guildID === 'string' ? guildID : guildID.id));
+}
+
+export function guildMemberRemove(member: GuildMember) {
+	if (member.id === client.user.id)
+		guildLeft(member.guild);
+}
+
+export function guildBanAdd(guild: Guild, user: User) {
+	if (user.id === client.user.id)
+		guildLeft(guild);
 }
 
 export function channelCreated(c: Channel) {
 	if (!c.isText() || c.type != 'text')
 		return;
-	if (!c.permissionsFor(client.user)?.has('SEND_MESSAGES'))
-		return;
-	c.send('first lol');
+
+	if (canSendMessage(c))
+		c.send('first lol');
+	
 }
 
 export async function messageRecieved(msg: Message) {
 	if (msg.author == client.user)
 		return;
 	
-	let runCount = 0;
 	for (const ma of actions()) {
 		try {
-			if (await ma.run(msg))
-				runCount++;
+			await ma.run(msg);
 		} catch (e) {
 			console.error(e);
 		}
@@ -63,10 +78,10 @@ export async function clientReady() {
 		if (actualGuilds.has(guildEntry._id))
 			actualGuilds.delete(guildEntry._id);
 		else // only in db
-			await guildLeft(guildEntry._id, guildEntry);
+			handleLeftGuildDB(guildEntry);
 	}
 
-	actualGuilds.forEach(guildJoined);
+	actualGuilds.forEach(handleJoinedGuildDB);
 
 	const setStatus = () => {
 		const { name, options } = getRandomElement(statuses);

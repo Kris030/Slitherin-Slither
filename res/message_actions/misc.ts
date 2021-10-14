@@ -1,6 +1,7 @@
 import { commandParser, inGuild, PrefixCommand, SubbedAction, TypedPrefixCommand } from '../../src/utils/actions.js';
+import { guildJoined, guildLeft, handleLeftGuildDB, handleJoinedGuildDB } from '../clientEvents.js';
+import { arrayToString, random, randomInt } from '../../src/utils/general.js';
 import { ParseableTypes, parseType } from '../../src/utils/parsing.js';
-import { arrayToString } from '../../src/utils/general.js';
 import GuildModel from '../models/Guild.js';
 
 export default () => [
@@ -17,8 +18,10 @@ export default () => [
 
 	PrefixCommand('ssparse')
 		.action(async function(args) {
-			if (args.length % 2 != 0)
-				return void this.reply('args % 2 != 0');
+			if (args.length % 2 != 0) {
+				this.reply('args % 2 != 0');
+				return;
+			}
 
 			const pArgs = new Array(args.length / 2);
 
@@ -26,9 +29,10 @@ export default () => [
 				try {
 					pArgs[i / 2] = await parseType(args[i + 1],
 						ParseableTypes.find(t =>
-							t.prototype.constructor.name.toLowerCase() ==
-							args[i].toLowerCase()));
-				} catch (e) {
+							t.prototype.constructor.name.toLowerCase() == args[i].toLowerCase()
+						)
+					);
+				} catch {
 					pArgs[i / 2] = `Couldn't parse`;
 				}
 			}
@@ -38,37 +42,74 @@ export default () => [
 
 	TypedPrefixCommand('ssrand', {}, Number, Number, Boolean)
 		.action(function([min, max, round]) {
-			
-			let n = Math.random() * max + min;
-			if (!round)
-				n = Math.round(n);
-
-			this.reply('Your number: ' + n);
+			this.reply('Your number: ' + round ? randomInt(min, max) : random(min, max));
 		}),
 
-		PrefixCommand('ssconfig')
-		.condition(inGuild)
-		.action(SubbedAction({
-			async get([ key ]) {
-				const g = await GuildModel.findById(this.guild.id);
-				const val = g.config.custom.get(key);
+		PrefixCommand('ssmemes')
+			.condition(inGuild)
+			.action(SubbedAction({
+				async get([ key ]) {
+					const g = await GuildModel.findById(this.guild.id);
 
-				this.reply(val ? val : `property doesn't exist`);
-			}, async set([ key, ...others]) {
-				const g = await GuildModel.findById(this.guild.id);
-				let value = others.reduce((p, c) => p + '\n' + c);
+					this.reply(g.store.has(key) ?
+								g.store.get(key) :
+								`property doesn't exist`
+					);
+				}, async set([ key, ...others]) {
+					const g = await GuildModel.findById(this.guild.id);
+					let value = others.reduce((p, c) => p + ' ' + c);
 
-				g.config.custom.set(key, value);
-				await g.save();
+					g.store.set(key, value);
+					await g.save();
 
-				this.reply('Set it.');
-			}, async list() {
-				const g = await GuildModel.findById(this.guild.id);
-				let m = '';
-				for (const entry of g.config.custom.entries())
-					m += entry[0] + `: ${entry[1]}\n`;
-				
-				this.reply(m ? m : 'nothing here...');
-			}
-		})),
+					this.reply('Set it.');
+				}, async list() {
+					const g = await GuildModel.findById(this.guild.id);
+					let m = '';
+					for (const entry of g.store.entries())
+						m += entry[0] + `: ${entry[1]}\n`;
+					
+					this.reply(m ? m : 'nothing here...');
+				}
+			})),
+		
+		TypedPrefixCommand('ssrejoin', { parseCount: 0 }, Boolean)
+			.condition(inGuild)
+			.action(async function([ notJustDB ]) {
+				if (notJustDB) {
+					await guildLeft(this.guild);
+					await guildJoined(this.guild);
+				} else {
+					await handleLeftGuildDB(this.guild.id);
+					await handleJoinedGuildDB(this.guild);
+				}
+				this.reply('did it.');
+			}),
+
+		/*PrefixCommand('ssconfig')
+			.condition(inGuild)
+			.action(SubbedAction({
+				async get([ key ]) {
+					const g = await GuildModel.findById(this.guild.id);
+					this.reply(key in g.config.system ? g.config.system[key] : `property doesn't exist`);
+				}, async set([ key, ...others]) {
+					const g = await GuildModel.findById(this.guild.id);
+					let value = others.reduce((p, c) => p + ' ' + c);
+
+					if (!(key in g.config.system))
+						return void this.reply(`property doesn't exist`);
+
+					g.config.system[key] = value;
+					await g.save();
+
+					this.reply('Set it.');
+				}, async list() {
+					const g = await GuildModel.findById(this.guild.id);
+					let m = '';
+					for (const entry of Object.entries(g.config.system))
+						m += entry[0] + `: ${entry[1]}\n`;
+					
+					this.reply(m ? m : 'nothing here...');
+				}
+			})),*/
 ];
