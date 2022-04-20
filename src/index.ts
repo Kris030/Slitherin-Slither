@@ -1,7 +1,7 @@
+import config from '../config.json' assert { type: 'json' };
 import { constructMongoURL } from './utils/database.js';
 import * as clientEvents from '../res/clientEvents.js';
 import { Client } from 'discord.js';
-import config from '../config.json';
 import mongoose from 'mongoose';
 
 export const client = new Client();

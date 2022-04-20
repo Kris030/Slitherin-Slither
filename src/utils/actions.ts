@@ -1,11 +1,11 @@
-import { ParseSupportedType, parseType, ParsedType, ParseableTypes, PrimitiveParseSupportedType, PrimitiveConstructor } from './parsing.js';
+import { ParseSupportedType, parseType, ParsedType } from './parsing.js';
 import { Await, MaybePromise } from './general.js';
 import MessageAction from '../MessageAction.js';
 
 export type Condition<T> = (this: MessageAction<T>, data: T) => MaybePromise<boolean>;
 export type SimpleAction<T> = (this: MessageAction<T>, data: T) => MaybePromise;
 export type Middleware<T, R> = (this: MessageAction<T>, data: T) => MaybePromise<R>;
-export type ActionErrorHandler<T> = (this: MessageAction<T>, data: T, error: any) => MaybePromise;
+export type ActionErrorHandler<T> = (this: MessageAction<T>, data: T, error: any) => MaybePromise<boolean | void>;
 
 export type CommandParserOptions = {
 	/**
@@ -98,17 +98,17 @@ prefixChecker: (prefix: string) => Condition<string[]> = prefix => data => data.
 typeParser = <T extends ParseSupportedType[]>(...types: T): Middleware<string[], TypeParserOut<T>> =>
 	unparsed => Promise.all(unparsed.map((v, i) => parseType(v, types[i]))) as any,
 
-PrefixCommand = (prefix: string, { defaultErrorHandler = undefined, parseCount = -1e10, ignoreEmpty = true }: PrefixCommandOptions = {}) =>
-	new MessageAction(defaultErrorHandler)
+PrefixCommand = (prefix: string, { defaultError = null, parseCount = -1e10, ignoreEmpty = true }: PrefixCommandOptions = {}) =>
+	new MessageAction(defaultError)
 		.middleware(msg => msg.content)
 		.middleware(commandParser({ parseCount: parseCount + 1, ignoreEmpty }))
 		.condition(prefixChecker(prefix)),
 
-TypedPrefixCommand = <T extends ParseSupportedType[]>(prefix: string, { defaultErrorHandler = undefined, parseCount = 0, ignoreEmpty = true }: PrefixCommandOptions = {}, ...types: T) => {
+TypedPrefixCommand = <T extends ParseSupportedType[]>(prefix: string, { defaultError = null, parseCount = 0, ignoreEmpty = true }: PrefixCommandOptions = {}, ...types: T) => {
 	if (parseCount < 0)
 		throw 'parseCount < 0 for TypedPrefixCommand';
 	
-	return PrefixCommand(prefix, { defaultErrorHandler, parseCount: types.length + parseCount, ignoreEmpty })
+	return PrefixCommand(prefix, { defaultError, parseCount: types.length + parseCount, ignoreEmpty })
 			.middleware(typeParser(...types))
 },
 
@@ -165,8 +165,14 @@ TypedSubbedCommand = (commands: TypedSubbedCommandType): SimpleAction<string[]> 
 
 		}
 
-}, inGuild: Condition<any> = function() {
-	return this.msg.guild != undefined;
+}, inGuild = (message?: string): Condition<any> => function() {
+	if (this.msg.guild != undefined)
+		return true;
+	
+	if (message)
+		this.reply(message);
+	
+	return false;
 };
 
 type TypeParserOut<T extends ParseSupportedType> = {
@@ -174,7 +180,7 @@ type TypeParserOut<T extends ParseSupportedType> = {
 };
 
 export type PrefixCommandOptions = CommandParserOptions & {
-	defaultErrorHandler?: ActionErrorHandler<string>;
+	defaultError?: ActionErrorHandler<string>;
 };
 
 export type SubbedCommandType = {

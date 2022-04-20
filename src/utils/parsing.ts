@@ -93,6 +93,7 @@ export function parseType<T extends ParseSupportedType>(string: string, type: T)
 					ret = new RegExp(string);
 					break;
 
+				case Array:
 				case Object:
 					ret = JSON.parse(string);
 					break;

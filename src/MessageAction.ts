@@ -11,8 +11,6 @@ export default class MessageAction<T = Message> {
 
 	private data: T;
 
-	private defaultErrorHandler: ActionErrorHandler<any>;
-
 	private readonly actions: {
 		type: ActionType;
 		action: Middleware<T, any> | Condition<T> | SimpleAction<T>,
@@ -20,15 +18,15 @@ export default class MessageAction<T = Message> {
 	}[] = [];
 	private final: SimpleAction<T>;
 
-	constructor(defaultErrorHandler?: ActionErrorHandler<any>) {
-		this.defaultErrorHandler = defaultErrorHandler;
-	}
+	constructor(
+		private defaultError?: ActionErrorHandler<any>
+	) {}
 
 	public middleware<R>(middleware: Middleware<T, R>): MessageAction<R> {
 		this.actions.push({
 			type: ActionType.MIDDLEWARE,
 			action: middleware,
-			onError: this.defaultErrorHandler
+			onError: null
 		});
 		return this as any;
 	}
@@ -37,7 +35,7 @@ export default class MessageAction<T = Message> {
 		this.actions.push({
 			type: ActionType.CONDITION,
 			action: condition,
-			onError: this.defaultErrorHandler
+			onError: null
 		});
 		return this;
 	}
@@ -46,12 +44,12 @@ export default class MessageAction<T = Message> {
 		this.actions.push({
 			type: ActionType.SIMPLE_ACTION,
 			action: condition,
-			onError: this.defaultErrorHandler
+			onError: null
 		});
 		return this;
 	}
 
-	public onError(errorHandler: ActionErrorHandler<T>, { overrideDefault=false } ={}) {
+	public onError(errorHandler: ActionErrorHandler<T>) {
 		if (this.actions.length == 0)
 			throw 'No action yet';
 		
@@ -68,7 +66,7 @@ export default class MessageAction<T = Message> {
 	public get msg() {
 		return this._msg;
 	}
-	
+
 	public reply: Message['channel']['send'] = function(...args: any[]) {
 		return this.channel.send(...args);
 	}
@@ -110,7 +108,7 @@ export default class MessageAction<T = Message> {
 				}
 
 			} catch (e) {
-				if (await this.currentError?.(this.data, e) === true)
+				if (await (this.currentError ?? this.defaultError as any)?.(this.data, e) === true)
 					continue;
 
 				ret = false;

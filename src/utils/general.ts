@@ -131,3 +131,18 @@ export function toRadians(degrees: number): number {
 export function toDegrees(radians: number) {
 	return 180 / Math.PI * radians;
 }
+
+export function dateToString(d: number | Date, lessThanOneSec='less than a second') {
+	if (typeof d === 'number')
+		d = new Date(d);
+	
+	let pp = '';
+	if (d.getUTCHours() > 0)
+		pp += d.getUTCHours() + 'h ';
+	if (d.getMinutes() > 0)
+		pp += d.getMinutes() + 'm ';
+	if (d.getSeconds() > 0)
+		pp += d.getSeconds() + 's';
+	
+	return pp || lessThanOneSec;
+}

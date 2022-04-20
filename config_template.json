@@ -6,5 +6,6 @@
 		"databaseName": "<database_name>",
 		"username": "<username>",
 		"password": "<password>"
-	}
+	},
+	"youtubeAPIKey": "<youtube_API_key>"
 }

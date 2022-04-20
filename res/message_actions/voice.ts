@@ -1,39 +1,152 @@
-import { Condition, PrefixCommand, TypedPrefixCommand } from '../../src/utils/actions.js';
-import { EmbedField, MessageEmbed, User, VoiceChannel } from 'discord.js';
-import ytdl from 'ytdl-core';
+import { Condition, inGuild, PrefixCommand, TypedPrefixCommand } from '../../src/utils/actions.js';
+import { EmbedField, MessageEmbed, StreamDispatcher, User, VoiceChannel, VoiceConnection } from 'discord.js';
+import config from '../../config.json' assert { type: 'json' };
+import { dateToString } from '../../src/utils/general.js';
+import youtubeSearch from 'youtube-search';
+import type { Readable } from 'stream';
+import ytdld from 'ytdl-core-discord';
+import type ytdl from 'ytdl-core';
 
-export type SongRequest = {
-	url: string;
-	by: User['id'];
+type SongDetails = {
+	thumbnail: ytdl.thumbnail;
 	length: number;
 	title: string;
-	thumbnail: ytdl.thumbnail;
+};
+export class SongRequest {
+	
+	private _details: SongDetails;
+	public async details(): Promise<SongDetails> {
+		if (this._details)
+			return this._details;
+		
+		const {
+			videoDetails: {
+				thumbnails: [ thumbnail ],
+				lengthSeconds,
+				title,
+			}
+		} = await ytdld.getInfo(this.url);
+
+		return this._details = {
+			length: parseInt(lengthSeconds),
+			title,
+			thumbnail: thumbnail ?? {
+				url: 'https://media.istockphoto.com/vectors/no-thumbnail-image-vector-graphic-vector-id1147544806?k=20&m=1147544806&s=170667a&w=0&h=5rN3TBN7bwbhW_0WyTZ1wU_oW5Xhan2CNd-jlVVnwD0=',
+				width: Number.MAX_SAFE_INTEGER,
+				height: Number.MAX_SAFE_INTEGER,
+			}
+		};
+	}
+
+	constructor(
+		public by: User,
+		public url: string,
+	) {}
 };
 
-export type VoiceData = {
-	leave: () => void;
-	pause?: () => void;
-	resume?: () => void;
-	stop?: () => void;
+export class VoiceData {
 
-	queue: SongRequest[];
-	disconnecter?: NodeJS.Timeout;
+	public queue: SongRequest[] = [];
+	public disconnecter?: NodeJS.Timeout;
 
-	loop: boolean;
-	loopqueue: boolean;
+	public loop = false;
+	public loopqueue = false;
 
-	playingSince: number;
-};
+	public playingSince: number;
+	public playing = false;
+	public pausedWhen?: number;
+
+	private conn: VoiceConnection;
+	private disp: StreamDispatcher;
+	private stream: Readable;
+
+	constructor(public vc: VoiceChannel) {
+		if (!this.conn)
+			vc.join().then(c => {
+				c.on('closing', () => queues.delete(vc.id));
+				this.conn = c;
+			});
+	}
+
+	public leave() {
+		queues.delete(this.vc.id);
+		this.vc.leave();
+	}
+
+	async play(url: string) {
+		clearInterval(this.disconnecter);
+		this.disconnecter = null;
+	
+		this.stream = await ytdld(url, { filter: 'audioonly' });
+
+		this.stream.once('readable', () => {
+			if (!this.playing) {
+				this.playingSince = Date.now();
+				this.playing = true;
+			}
+			this.disp = this.conn.play(this.stream, { type: 'opus' }).on('finish', () => this.onEnd());
+		});
+		this.stream.on('error', () => {
+			if (this.stream.readable)
+				this.resume();
+			else
+				this.onEnd();
+		});
+	}
+
+	async onEnd(doLoops=true) {
+		this.stop();
+
+		if (!doLoops || !this.loop) {
+			const p = this.queue.pop();
+			if (doLoops && this.loopqueue)
+				this.queue.unshift(p);
+		}
+
+		if (this.queue.length) {
+			this.play(this.queue[this.queue.length - 1].url);
+			return;
+		}
+	
+		this.disconnecter = setTimeout(() => {
+			if (!this.queue.length)
+				this.leave();
+		}, 30_000);
+	}
+
+	public pause() {
+		this.playing = false;
+		this.pausedWhen = Date.now();
+		this.disp.pause(false);
+	}
+	public resume() {
+		this.playing = true;
+		this.pausedWhen = null;
+		this.disp.resume();
+	}
+	public stop() {
+		this.playing = false;
+		this.disp.destroy();
+	}
+
+	public get progress() {
+		return dateToString(
+			this.playing ?
+				Date.now() - this.playingSince :
+				this.pausedWhen
+		);
+	}
+}
 
 const queues = new Map<string, VoiceData>();
 
-function onEnd(vc: VoiceChannel, vd: VoiceData) {
+/*function onEnd(vc: VoiceChannel, vd: VoiceData, doLoops=true) {
 	vd.stop();
 	vd.pause = vd.resume = vd.stop = null;
 
-	if (!vd.loop) {
+	if (!doLoops || !vd.loop) {
 		const p = vd.queue.pop();
-		if (vd.loopqueue)
+		if (doLoops && vd.loopqueue)
 			vd.queue.unshift(p);
 	}
 
@@ -46,25 +159,48 @@ function onEnd(vc: VoiceChannel, vd: VoiceData) {
 		if (!vd.queue.length)
 			vd.leave();
 	}, 30_000);
-
 }
 
 async function play(vc: VoiceChannel, url: string, vd: VoiceData) {
 	clearInterval(vd.disconnecter);
 	vd.disconnecter = null;
 
-	const connection = await vc.join(), ytStream = ytdl(url, { filter: 'audioonly' });
+	const connection = await vc.join();
+	let ytStream = await ytdld(url, { filter: 'audioonly' });
 
-	vd.pause = () => connection.dispatcher.pause(true);
-	vd.resume = () => connection.dispatcher.resume();
+	const armStream = () => {
+		ytStream.once('readable', () => {
+			if (!vd.playing) {
+				vd.playingSince = Date.now();
+				vd.playing = true;
+			}
+			connection.play(ytStream, { type: 'opus' }).on('finish', () => onEnd(vc, vd));
+		});
+		ytStream.on('error', () => {
+			if (ytStream.readable)
+				vd.resume();
+			else
+				onEnd(vc, vd);
+		});
+	};
+
+	let begin: number;
+	vd.pause = () => {
+		begin = (vd.pausedWhen = Date.now()) - vd.playingSince;
+		vd.stop();
+		vd.playing = false;
+		vd.pausedWhen = null;
+	};
+	vd.resume = async () => {
+		if (vd.playing)
+			return;
+		ytStream = await ytdld(url, { filter: 'audioonly', begin });
+		vd.playing = true;
+		armStream();
+	};
 	vd.stop = () => ytStream.destroy();
-	
-	ytStream.once('readable', () => {
-		const dp = connection.play(ytStream);
-		vd.playingSince = Date.now();
-		dp.on('finish', () => onEnd(vc, vd));
-	});
-}
+	armStream();
+}*/
 
 const inVoice: Condition<any> = function() {
 	if (queues.has(this.msg.member.voice.channelID))
@@ -75,65 +211,40 @@ const inVoice: Condition<any> = function() {
 
 export default () => [
 
-	TypedPrefixCommand('ssplay', {}, URL)
-		.action(async function([{ href: url }]) {
+	PrefixCommand('ssplay', { parseCount: 0 })
+		.condition(inGuild('need to be in a guild fucker'))
+		.condition(function() {
 			const vc = this.msg.member.voice.channel;
-			
-			if (!vc.joinable) {
+			if (!vc.joinable)
 				this.reply(`sry can't join`);
-				return;
-			}
-			
-			if (!ytdl.validateURL(url)) {
-				this.reply('Not a youtube url fucker');
-				return;
-			}
+			return vc.joinable;
+		})
+		.middleware(async function([ query ]) {
+
+			if (ytdld.validateURL(query))
+				return [ query ];
+
+			const { results: [ res ] } = await youtubeSearch(query, {
+				maxResults: 1,
+				safeSearch: 'none',
+				key: config.youtubeAPIKey,
+			});
+
+			return [ res.link ];
+		})
+		.action(async function playSong([ url ]) {
+			const vc = this.msg.member.voice.channel;
 
 			let vd = queues.get(vc.id);
-			if (!vd) {
-				queues.set(vc.id, vd = {
-					loopqueue: false,
-					loop: false,
-					queue: [],
-					leave: () => {
-						queues.delete(vc.id);
-						vc.leave();
-					},
-					playingSince: Date.now()
-				});
-			}
-			
+			if (!vd)
+				queues.set(vc.id, vd = new VoiceData(vc));
+
 			if (!vd.queue.length)
-				play(vc, url, vd);
+				vd.play(url);
 
-			const req: SongRequest = {
-				url,
-				by: this.author.username,
-				length: -1,
-				title: null,
-				thumbnail: null
-			};
-			vd.queue.unshift(req);
-
-			const { videoDetails: info } = await ytdl.getInfo(url);
-
-			req.length = parseInt(info.lengthSeconds);
-			req.title = info.title;
-
-			console.log(info.thumbnails);
+			vd.queue.unshift(new SongRequest(this.author, url));
 			
-			let maxi = -1, maxA = -1;
-			for (let i = 0; i < info.thumbnails.length; i++) {
-				const t = info.thumbnails[i], s = t.width * t.height;
-				if (maxA < s) {
-					maxA = s;
-					maxi = i;
-				}
-			}
-			if (maxi !== -1)
-				req.thumbnail = info.thumbnails[maxi];
-
-			this.reply(`added \`${req.title}\` to queue`);
+			this.reply('added le song to queue');
 		}),
 
 	PrefixCommand('sspause', { parseCount: 0 })
@@ -157,96 +268,115 @@ export default () => [
 			this.reply('have a magnificient day fuckers');
 		}),
 
-	PrefixCommand('ssqueue', { parseCount: 0})
+	PrefixCommand('ssqueue', { parseCount: 0 })
 		.condition(inVoice)
-		.action(function() {
-			const q = queues.get(this.msg.member.voice.channelID);
-			const qlen = q.queue.length, fields = new Array<EmbedField>(qlen);
+		.action(async function() {
+			const q = queues.get(this.msg.member.voice.channelID), ql = q.queue.length;
+			if (ql === 0) {
+				this.reply('empty queue... stoopid');
+				return;
+			}
 
-			for (let ind = qlen - 1; ind >= 0; ind--) {
-				const req = q.queue[ind];
+			const fields = new Array<EmbedField>(ql);
+			
+			for (let i = ql - 1; i >= 0; i--) {
+				const s = q.queue[i], { by: { id }, url } = s, { title, length } = await s.details();
 				fields.push({
-					name: `Shit song ${qlen - ind}.`,
-					value: `[${req.title}](${req.url}) | ${req.length}s | by: ${req.by}`,
-					inline: false
+					name: `Shitty song ${ql - i}.`,
+					value: `[${title}](${url}) | ${dateToString(length * 1000)} | by: <@${id}>`,
+					inline: false,
 				});
 			}
-			
-			const curr = q.queue[qlen - 1];
 
+			const curr = q.queue[ql - 1], cd = await curr.details();
 			this.reply(new MessageEmbed({
 				title: `List of shit songs`,
 				hexColor: 'ee7d22',
 				fields,
 				image: {
-					url: curr.thumbnail.url,
+					url: cd.thumbnail.url,
+					width: Math.min(1920 / 15, cd.thumbnail.width),
+					height: Math.min(1080 / 15, cd.thumbnail.height),
 				},
 				footer: {
-					text: `${Math.floor((Date.now() - q.playingSince) / 1000)}s of ${curr.length}`
-				}
+					text: `${q.loop ? '🔂 |' : q.loopqueue ? '🔁 |' : ''} ${q.progress} of ${dateToString(cd.length * 1000)}`,
+				},
 			}));
 		}),
-	
+
 	PrefixCommand('ssloop', { parseCount: 0 })
 		.condition(inVoice)
 		.action(async function() {
 			const q = queues.get(this.msg.member.voice.channelID);
-			
+
 			if (q.loop = !q.loop)
 				this.msg.react('🔂');
 			else {
 				await this.msg.react('❌');
 				this.msg.react('🔂');
 			}
-			
+
 		}),
-	
+
 	PrefixCommand('ssloopqueue', { parseCount: 0 })
 		.condition(inVoice)
 		.action(async function() {
 			const q = queues.get(this.msg.member.voice.channelID);
-			
+
 			if (q.loopqueue = !q.loopqueue)
 				this.msg.react('🔁');
 			else {
 				await this.msg.react('❌');
 				this.msg.react('🔁');
 			}
-
 		}),
-	
+
 	PrefixCommand('sskip', { parseCount: 0 })
 		.condition(inVoice)
 		.action(function() {
 			const q = queues.get(this.msg.member.voice.channelID);
-			onEnd(this.msg.member.voice.channel, q);
+			q.onEnd();
 			this.msg.react('⏭️');
 		}),
-	
+
 	PrefixCommand('sstop', { parseCount: 0 })
 		.condition(inVoice)
 		.action(function() {
 			const q = queues.get(this.msg.member.voice.channelID);
 			q.queue = [];
-			onEnd(this.msg.member.voice.channel, q);
+			q.onEnd(false);
 			this.msg.react('⏹️');
 		}),
-	
+
 	TypedPrefixCommand('ssremove', {}, Number)
 		.condition(inVoice)
 		.action(function([index]) {
 			const q = queues.get(this.msg.member.voice.channelID);
-			
+
 			if (index < 0 || index >= q.queue.length) {
 				this.reply('out of bounds you retard');
 				return;
 			}
 
-			if (index === 1) {
-				this.reply('use skip you fagster');
-				return;
-			}
+			q.queue.splice(index);
+			
+			if (index === 0)
+				q.onEnd(false);
 
-			q.queue.splice(index + 1);
 		}),
+
+	PrefixCommand('ssearchy', { parseCount: 0 })
+		.condition(inGuild())
+		.action(async function([ query ]) {
+			const { results: [ res ] } = await youtubeSearch(query, {
+				maxResults: 1,
+				safeSearch: 'none',
+				key: config.youtubeAPIKey,
+			});
+			this.reply(res.link);
+		})
+		.onError(function() {
+			this.reply('some fucking error smh');
+		}),
+
 ];

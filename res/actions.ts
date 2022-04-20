@@ -8,6 +8,7 @@ import economy from './message_actions/economy.js';
 import voice from './message_actions/voice.js';
 import game from './message_actions/game.js';
 import misc from './message_actions/misc.js';
+import test from './message_actions/test.js';
 
 export default () => [
 	...emojify(),
@@ -17,4 +18,5 @@ export default () => [
 	...misc(),
 	...economy(),
 	...voice(),
+	...test(),
 ] as any as MessageAction<Message>[];

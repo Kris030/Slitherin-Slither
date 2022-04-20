@@ -1,4 +1,5 @@
 import { inGuild, PrefixCommand, TypedPrefixCommand } from '../../src/utils/actions.js';
+import { dateToString } from '../../src/utils/general.js';
 import GuildUser from '../models/GuildUser.js';
 import { Guild, User } from 'discord.js';
 
@@ -25,14 +26,14 @@ async function getGuildUserServerEntry(user: User, server: Guild | string, saveO
 export default () => [
 	
 	TypedPrefixCommand('ssbalance', {}, User)
-		.condition(inGuild)
+		.condition(inGuild())
 		.action(async function([ user ]) {
 			const gus = await getGuildUserServerEntry(user, this.guild, true);
 			await this.reply(gus.economy.balance + '€');
 		}),
 
 	PrefixCommand('sspayday')
-		.condition(inGuild)
+		.condition(inGuild())
 		.action(async function() {
 			const mooney = Math.floor(Math.random() * 100);
 
@@ -43,20 +44,7 @@ export default () => [
 
 			const d = e.lastPayday + cooldown - Date.now();
 			if (d > 0) {
-				const p = new Date(d);
-				
-				let pp = '';
-				if (p.getUTCHours() > 0)
-					pp += p.getUTCHours() + 'h ';
-				if (p.getMinutes() > 0)
-					pp += p.getMinutes() + 'm ';
-				if (p.getSeconds() > 0)
-					pp += p.getSeconds() + 's';
-
-				if (pp === '')
-					pp = 'less then a second you impatient bastard';
-
-				this.reply('fuck you, time left: ' + pp);
+				this.reply('fuck you, time left: ' + dateToString(d, 'less then a second you impatient bastard'));
 				return;
 			}
 
@@ -70,7 +58,7 @@ export default () => [
 		}),
 
 	TypedPrefixCommand('ssbribe', {}, Number, User)
-		.condition(inGuild)
+		.condition(inGuild())
 		.action(async function([ amount, to ]) {
 
 			if (this.author == to) {
